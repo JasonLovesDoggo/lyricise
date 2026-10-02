@@ -6,7 +6,8 @@ import subprocess
 import sys
 import tempfile
 
-binary = pathlib.Path(__file__).resolve().parent.parent / 'build/Lyricise.app/Contents/MacOS/LyriciseLauncher'
+binary = (pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else
+          pathlib.Path(__file__).resolve().parent.parent / 'build/Lyricise.app/Contents/MacOS/LyriciseLauncher')
 def response(request, command=None, timeout=5):
     """Return the HTTP status only after the launcher exits successfully."""
     client, server = socket.socketpair()
