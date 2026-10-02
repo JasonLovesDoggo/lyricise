@@ -1,0 +1,25 @@
+# Lyricise — changes are applied while the app is running.
+[window]
+width = 420
+height = 300
+always_on_top = true
+all_spaces = true
+remember_position = true
+
+[appearance]
+background = "#1e1e2e"
+background_opacity = 0.75
+blur = 0
+accent = "#b4befe"
+text = "#cdd6f4"
+muted_text = "#6c7086"
+font = "SF Pro"
+font_size = 20
+padding = 16
+corner_radius = 12
+
+[lyrics]
+show_track_title = true
+show_album_art = false
+follow_playback = true
+offset_ms = 0

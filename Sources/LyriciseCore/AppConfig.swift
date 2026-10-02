@@ -81,38 +81,26 @@ public struct AppConfig: Sendable, Equatable {
                 (48...57).contains(byte) || (65...70).contains(byte) || (97...102).contains(byte)
             }
     }
-    public static let example = """
-        # Lyricise — changes are applied while the app is running.
-        [window]
-        width = 420
-        height = 300
-        always_on_top = true
-        all_spaces = true
-        remember_position = true
-
-        [appearance]
-        background = "#1e1e2e"
-        background_opacity = 0.75
-        blur = 0
-        accent = "#b4befe"
-        text = "#cdd6f4"
-        muted_text = "#6c7086"
-        font = "SF Pro"
-        font_size = 20
-        padding = 16
-        corner_radius = 12
-
-        [lyrics]
-        show_track_title = true
-        show_album_art = false
-        follow_playback = true
-        offset_ms = 0
-        """
+    /// The bundled configuration written on first launch.
+    public static var defaultTOML: String {
+        get throws {
+            guard let url = Bundle.module.url(forResource: "default", withExtension: "toml") else {
+                throw ConfigError.missingDefaultResource
+            }
+            return try String(contentsOf: url, encoding: .utf8)
+        }
+    }
 }
 public enum ConfigError: LocalizedError {
     case invalidValue
+    case missingDefaultResource
     public var errorDescription: String? {
-        "Check colors (#RRGGBB), window size (260–2000 × 120–2000), opacity (0–1), blur (0–100), font size (10–72), padding (0–80), corner radius (0–40), and offset (±10000 ms)."
+        switch self {
+        case .missingDefaultResource:
+            "The bundled default configuration is missing. Reinstall Lyricise to restore it."
+        case .invalidValue:
+            "Check colors (#RRGGBB), window size (260–2000 × 120–2000), opacity (0–1), blur (0–100), font size (10–72), padding (0–80), corner radius (0–40), and offset (±10000 ms)."
+        }
     }
 }
 private struct FileConfig: Codable {

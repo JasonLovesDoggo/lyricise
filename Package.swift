@@ -10,7 +10,7 @@ let package = Package(
     ],
     dependencies: [.package(url: "https://github.com/mattt/swift-toml.git", from: "2.0.0")],
     targets: [
-        .target(name: "LyriciseCore", dependencies: [.product(name: "TOML", package: "swift-toml")]),
+        .target(name: "LyriciseCore", dependencies: [.product(name: "TOML", package: "swift-toml")], resources: [.process("Resources")]),
         .executableTarget(name: "Lyricise", dependencies: ["LyriciseCore"]),
         .executableTarget(name: "LyriciseLauncher"),
         .testTarget(name: "LyriciseCoreTests", dependencies: ["LyriciseCore"]),

@@ -30,7 +30,7 @@ import Observation
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             if !FileManager.default.fileExists(atPath: configURL.path) {
-                try AppConfig.example.write(to: configURL, atomically: true, encoding: .utf8)
+                try AppConfig.defaultTOML.write(to: configURL, atomically: true, encoding: .utf8)
             }
             config = (try? AppConfig.parse(String(contentsOf: configURL, encoding: .utf8))) ?? AppConfig()
             configWatcher = ConfigWatcher(url: configURL) { [weak self] result in

@@ -5,8 +5,8 @@ import Testing
 
 @Suite("Configuration")
 struct ConfigurationTests {
-    @Test func exampleMatchesDefaults() throws {
-        #expect(try AppConfig.parse(AppConfig.example) == AppConfig())
+    @Test func bundledConfigMatchesDefaults() throws {
+        #expect(try AppConfig.parse(AppConfig.defaultTOML) == AppConfig())
         #expect(try AppConfig.parse("") == AppConfig())
     }
 

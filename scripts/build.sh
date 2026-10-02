@@ -8,6 +8,11 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 BIN=$(swift build -c release --show-bin-path)
 cp "$BIN/Lyricise" "$APP/Contents/MacOS/Lyricise"
 cp "$BIN/LyriciseLauncher" "$APP/Contents/MacOS/LyriciseLauncher"
+# SwiftPM resources must ship with the app, not depend on the build directory.
+for resource in "$BIN"/*.bundle; do
+    [ -d "$resource" ] || continue
+    ditto "$resource" "$APP/Contents/Resources/$(basename "$resource")"
+done
 codesign --force --sign - "$APP/Contents/MacOS/LyriciseLauncher"
 swift scripts/render-icon.swift "$PWD/build"
 iconutil -c icns "$PWD/build/AppIcon.iconset" -o "$APP/Contents/Resources/AppIcon.icns"
