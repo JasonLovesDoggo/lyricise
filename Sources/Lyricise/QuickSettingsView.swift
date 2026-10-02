@@ -39,7 +39,8 @@ import SwiftUI
                 }
                 Slider(
                     value: Binding(
-                        get: { store.config.fontSize }, set: { store.config.fontSize = $0.rounded() }),
+                        get: { store.config.fontSize },
+                        set: { store.settings.preview(\.fontSize, to: $0.rounded()) }),
                     in: 10...72
                 ) { editing in
                     if !editing { store.set(\.fontSize, to: store.config.fontSize) }
@@ -57,7 +58,7 @@ import SwiftUI
                 Slider(
                     value: Binding(
                         get: { Double(store.config.blurRadius) },
-                        set: { store.config.blurRadius = Int($0.rounded()) }), in: 0...100
+                        set: { store.settings.preview(\.blurRadius, to: Int($0.rounded())) }), in: 0...100
                 ) { editing in
                     if !editing { store.set(\.blurRadius, to: store.config.blurRadius) }
                 }.accessibilityLabel("Blur intensity")

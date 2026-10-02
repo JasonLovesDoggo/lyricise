@@ -3,34 +3,23 @@ import LyriciseCore
 import Observation
 
 @MainActor @Observable final class Store {
-    var config = AppConfig()
+    let settings: Settings
+    var config: AppConfig { settings.value }
     var hovering = false
     var quickSettingsPresented = false
     let playback = PlaybackState()
-    var configError: String?
+    var configError: String? { settings.error }
     var connectionError: String?
     var message: String { connectionError ?? playback.message }
     @ObservationIgnored var bridge: Bridge?
-    @ObservationIgnored var configWatcher: ConfigWatcher?
     @ObservationIgnored var timer: Task<Void, Never>?
     let directory = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(
         ".config/lyricise")
-    var configURL: URL { directory.appendingPathComponent("config.toml") }
+    var configURL: URL { settings.url }
     init() {
+        settings = Settings(url: directory.appendingPathComponent("config.toml"))
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            if !FileManager.default.fileExists(atPath: configURL.path) {
-                try AppConfig.defaultTOML.write(to: configURL, atomically: true, encoding: .utf8)
-            }
-            config = (try? AppConfig.parse(String(contentsOf: configURL, encoding: .utf8))) ?? AppConfig()
-            configWatcher = ConfigWatcher(url: configURL) { [weak self] result in
-                switch result {
-                case .success(let value):
-                    self?.config = value
-                    self?.configError = nil
-                case .failure(let error): self?.configError = error.localizedDescription
-                }
-            }
             let tokenURL = directory.appendingPathComponent("bridge-token")
             let token: String
             if let existing = try? String(contentsOf: tokenURL, encoding: .utf8), !existing.isEmpty {
@@ -57,7 +46,7 @@ import Observation
             }
         }
     }
-    func reload() { configWatcher?.reload() }
+    func reload() { settings.reload() }
     func accept(_ value: Snapshot) {
         if playback.accept(value, at: .now, offsetMS: config.offsetMS) { connectionError = nil }
     }
@@ -66,13 +55,7 @@ import Observation
         bridge?.seek(trackID: playback.trackID, position: position)
     }
     func set<Value>(_ key: WritableKeyPath<AppConfig, Value>, to value: Value) {
-        var updated = config
-        updated[keyPath: key] = value
-        do {
-            try updated.serialized().write(to: configURL, atomically: true, encoding: .utf8)
-            config = updated
-            configError = nil
-        } catch { configError = error.localizedDescription }
+        settings.set(key, to: value)
     }
     func openConfig() { NSWorkspace.shared.open(configURL) }
 }

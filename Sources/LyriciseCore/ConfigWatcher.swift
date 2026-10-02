@@ -1,38 +1,32 @@
 import Darwin
 import Foundation
-import LyriciseCore
 
 /// Watches both the file and its directory so editors may either overwrite or atomically replace it.
-/// Parsing happens on a serial background queue; the owner decides how to present failures while
-/// retaining its last valid configuration.
+/// Delivers invalidations, not parsed values: the owner always reads the current file.
 @MainActor
 final class ConfigWatcher {
     private let worker: ConfigWatchWorker
 
-    init(url: URL, onChange: @escaping @MainActor @Sendable (Result<AppConfig, any Error>) -> Void) {
+    init(url: URL, onChange: @escaping @MainActor @Sendable () -> Void) {
         worker = ConfigWatchWorker(url: url, onChange: onChange)
         worker.start()
     }
 
-    func reload() { worker.reload() }
-    func stop() { worker.stop() }
     deinit { worker.stop() }
 }
 
 /// All mutable fields below are confined to `queue`. The unchecked conformance lets filesystem
-/// event handlers enqueue work without moving file descriptors or parser state between threads.
+/// event handlers enqueue work without moving file descriptors or watch state between threads.
 private final class ConfigWatchWorker: @unchecked Sendable {
     private let queue = DispatchQueue(label: "com.json.lyricise.config", qos: .utility)
     private let url: URL
-    private let onChange: @MainActor @Sendable (Result<AppConfig, any Error>) -> Void
+    private let onChange: @MainActor @Sendable () -> Void
     private var directorySource: (any DispatchSourceFileSystemObject)?
     private var fileSource: (any DispatchSourceFileSystemObject)?
-    private var pendingRead: DispatchWorkItem?
-    private var lastData: Data?
+    private var pendingNotification: DispatchWorkItem?
     private var stopped = false
-    private static let maximumBytes = 256 * 1024
 
-    init(url: URL, onChange: @escaping @MainActor @Sendable (Result<AppConfig, any Error>) -> Void) {
+    init(url: URL, onChange: @escaping @MainActor @Sendable () -> Void) {
         self.url = url
         self.onChange = onChange
     }
@@ -42,26 +36,15 @@ private final class ConfigWatchWorker: @unchecked Sendable {
             guard !stopped else { return }
             watchDirectory()
             watchFile()
-            read(force: true)
-        }
-    }
-
-    func reload() {
-        queue.async { [self] in
-            guard !stopped else { return }
-            pendingRead?.cancel()
-            pendingRead = nil
-            if directorySource == nil { watchDirectory() }
-            watchFile()
-            read(force: true)
+            onInvalidation()
         }
     }
 
     func stop() {
         queue.async { [self] in
             stopped = true
-            pendingRead?.cancel()
-            pendingRead = nil
+            pendingNotification?.cancel()
+            pendingNotification = nil
             fileSource?.cancel()
             directorySource?.cancel()
             fileSource = nil
@@ -75,7 +58,7 @@ private final class ConfigWatchWorker: @unchecked Sendable {
             guard let self, !self.stopped else { return }
             // A replacement creates a new inode, so attach a fresh watch to the current path.
             self.watchFile()
-            self.scheduleRead()
+            self.scheduleNotification()
         }
     }
 
@@ -83,7 +66,7 @@ private final class ConfigWatchWorker: @unchecked Sendable {
         fileSource?.cancel()
         fileSource = makeSource(path: url.path) { [weak self] in
             guard let self, !self.stopped else { return }
-            self.scheduleRead()
+            self.scheduleNotification()
         }
     }
 
@@ -103,53 +86,19 @@ private final class ConfigWatchWorker: @unchecked Sendable {
         return source
     }
 
-    private func scheduleRead() {
-        pendingRead?.cancel()
+    private func scheduleNotification() {
+        pendingNotification?.cancel()
         let item = DispatchWorkItem { [weak self] in
             guard let self, !self.stopped else { return }
-            self.pendingRead = nil
-            self.read(force: false)
+            self.pendingNotification = nil
+            self.onInvalidation()
         }
-        pendingRead = item
+        pendingNotification = item
         queue.asyncAfter(deadline: .now() + .milliseconds(150), execute: item)
     }
 
-    private func read(force: Bool) {
-        let data: Data
-        do {
-            let handle = try FileHandle(forReadingFrom: url)
-            defer { try? handle.close() }
-            data = try handle.read(upToCount: Self.maximumBytes + 1) ?? Data()
-            guard data.count <= Self.maximumBytes else { throw ConfigWatchError.tooLarge }
-        } catch {
-            lastData = nil
-            deliver(.failure(error))
-            return
-        }
-        guard force || data != lastData else { return }
-        lastData = data
-        do {
-            guard let source = String(data: data, encoding: .utf8) else {
-                throw ConfigWatchError.invalidEncoding
-            }
-            deliver(.success(try AppConfig.parse(source)))
-        } catch {
-            deliver(.failure(error))
-        }
-    }
-
-    private func deliver(_ result: Result<AppConfig, any Error>) {
+    private func onInvalidation() {
         let callback = onChange
-        Task { @MainActor in callback(result) }
-    }
-}
-
-private enum ConfigWatchError: LocalizedError {
-    case tooLarge, invalidEncoding
-    var errorDescription: String? {
-        switch self {
-        case .tooLarge: "The configuration file must be smaller than 256 KiB."
-        case .invalidEncoding: "The configuration file must contain UTF-8 text."
-        }
+        Task { @MainActor in callback() }
     }
 }
