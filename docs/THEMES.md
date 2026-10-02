@@ -1,11 +1,5 @@
 # Themes
 
-Fourteen palette adaptations from popular Zed and Ghostty theme families. Choose a look below, then open **Quick Settings → Open Config** and replace the existing `[appearance]` section in `~/.config/lyricise/config.toml` with its snippet. Keep your other sections. Lyricise reloads the file when you save.
-
-Each screenshot uses “Hey Jude” by The Beatles paused around halfway, the same layout, and the same desktop backdrop, with 75% opacity and blur set to 8. Adjust `background_opacity` (`0`–`1`) and `blur` (`0`–`100`) to taste. Font, size, spacing, and corners are customizable too.
-
-The selection draws on the [Zed theme catalogue](https://zed.dev/extensions?filter=themes); it is not a combined popularity ranking. Colors come from Ghostty's bundled [iTerm2 Color Schemes](https://github.com/mbadolato/iTerm2-Color-Schemes/tree/master/ghostty), adapted to Lyricise's background, text, and active-line roles. Catppuccin Mocha keeps Lyricise's lavender highlight.
-
 # Catppuccin Mocha
 
 ![Lyricise in Catppuccin Mocha](themes/catppuccin-mocha.jpg)
