@@ -166,25 +166,26 @@ struct LyricsView: View {
     @State private var hoveredLine: Int?
     private var hovering: Bool { store.hovering }
     @State private var resizeStart: NSRect?
-    private func setting(_ key: WritableKeyPath<AppConfig, Bool>) -> Binding<Bool> {
+    private func setting<Value>(_ key: WritableKeyPath<AppConfig, Value>) -> Binding<Value> {
         Binding(get: { store.config[keyPath: key] }, set: { store.set(key, to: $0) })
     }
     var body: some View {
         ZStack {
             Color(hex: store.config.background).opacity(reduceTransparency ? 1 : store.config.opacity)
             VStack(alignment: .leading, spacing: 0) {
-                if store.config.showTrackTitle || store.config.showArtwork {
+                if store.config.trackTitleVisibility != .never || store.config.artworkVisibility != .never {
                     HStack(spacing: 12) {
-                        if store.config.showTrackTitle {
+                        if store.config.trackTitleVisibility != .never {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(store.playback.title).font(.system(size: 12, weight: .semibold)).lineLimit(1)
                                 Text(store.playback.artist).font(.system(size: 11)).foregroundStyle(
                                     Color(hex: store.config.mutedText)
                                 ).lineLimit(1)
                             }
+                            .opacity(store.config.trackTitleVisibility.isVisible(hovering: hovering) ? 1 : 0)
                         }
                         Spacer(minLength: 0)
-                        if store.config.showArtwork, let url = store.playback.artworkURL {
+                        if store.config.artworkVisibility != .never, let url = store.playback.artworkURL {
                             AsyncImage(url: url) { image in
                                 image.resizable().scaledToFill()
                             } placeholder: {
@@ -192,6 +193,7 @@ struct LyricsView: View {
                             }
                             .frame(width: 40, height: 40).clipShape(RoundedRectangle(cornerRadius: 6))
                             .accessibilityLabel("Album cover")
+                            .opacity(store.config.artworkVisibility.isVisible(hovering: hovering) ? 1 : 0)
                         }
                     }.padding(.horizontal, store.config.padding).padding(.top, 16).padding(.bottom, 10)
                 }
@@ -354,6 +356,11 @@ struct LyricsView: View {
         }.contentShape(Rectangle()).gesture(WindowDragGesture()).allowsWindowActivationEvents()
         .ignoresSafeArea().foregroundStyle(Color(hex: store.config.text)).clipShape(
             RoundedRectangle(cornerRadius: store.config.cornerRadius))
+        .overlay {
+            RoundedRectangle(cornerRadius: store.config.cornerRadius)
+                .strokeBorder(Color(hex: store.config.borderColor), lineWidth: store.config.borderWidth)
+                .allowsHitTesting(false)
+        }
     }
     @ViewBuilder private var commonSettings: some View {
         Button("Quick Settings…") { store.quickSettingsPresented = true }
@@ -374,8 +381,8 @@ struct LyricsView: View {
                 Text("Custom · \(store.config.blurRadius)").tag(store.config.blurRadius)
             }
         }
-        Toggle("Show Song and Artist", isOn: setting(\.showTrackTitle))
-        Toggle("Show Album Cover", isOn: setting(\.showArtwork))
+        VisibilityPicker(title: "Song details", selection: setting(\.trackTitleVisibility))
+        VisibilityPicker(title: "Album cover", selection: setting(\.artworkVisibility))
         Toggle("Follow Current Lyric", isOn: setting(\.followPlayback))
         Divider()
         Button("Open Config…") { store.openConfig() }

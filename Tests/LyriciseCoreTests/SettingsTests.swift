@@ -56,10 +56,10 @@ import Testing
         defer { try? FileManager.default.removeItem(at: directory) }
         let settings = Settings(url: directory.appendingPathComponent("config.toml"))
         var external = AppConfig()
-        external.showArtwork = true
+        external.artworkVisibility = .always
         try external.serialized().write(to: settings.url, atomically: true, encoding: .utf8)
         settings.set(\.blurRadius, to: 50)
-        #expect(settings.value.showArtwork)
+        #expect(settings.value.artworkVisibility == .always)
         #expect(settings.value.blurRadius == 50)
     }
 
