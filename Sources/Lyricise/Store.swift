@@ -56,7 +56,7 @@ import Observation
                 token: token, receive: { [weak self] data in Task { @MainActor in self?.accept(data) } },
                 failure: { [weak self] error in Task { @MainActor in self?.message = error } },
                 toggleWindow: { Task { @MainActor in PanelController.current?.toggle() } })
-            try bridge?.start()
+            bridge?.start()
         } catch { message = error.localizedDescription }
         timer = Task { [weak self] in
             while !Task.isCancelled {

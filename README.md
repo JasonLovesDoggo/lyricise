@@ -70,6 +70,8 @@ Window size and remember_position apply at launch; remembered geometry takes pre
 
 `companion/lyricise.js` runs inside Spicetify. It reads playback through `Spicetify.Player` and requests lyrics using Spotify's native `Platform.RequestBuilder` (with `CosmosAsync` fallback for older Spotify builds). Spotify credentials stay inside Spotify. There is no separate login, cookie extraction, backend, analytics, or fallback lyrics service.
 
+The app bridge uses [Hummingbird](https://github.com/hummingbird-project/hummingbird) for HTTP parsing, routing, and typed JSON responses. Mutable command and health state lives in a Swift actor. Snapshot uploads are capped at 1 MB, headers at 8 KiB, and idle connections at five seconds.
+
 Normalized playback and lyrics are posted to **127.0.0.1:17389**. Requests require a random per-install bridge key; the installer writes it to `~/.config/lyricise/bridge-token` with owner-only file permissions. That key is only for the local bridge, not a Spotify credential. Do not commit rendered copies of the installed extension.
 
 Spotify's lyrics API is undocumented and Spicetify can need reapplying after Spotify updates. To repair the companion:
