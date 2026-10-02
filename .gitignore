@@ -64,3 +64,6 @@ fastlane/test_output
 .build/
 build/
 .DS_Store
+
+# Local credentials
+.env
