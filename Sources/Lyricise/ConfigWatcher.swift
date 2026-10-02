@@ -87,7 +87,9 @@ private final class ConfigWatchWorker: @unchecked Sendable {
         }
     }
 
-    private func makeSource(path: String, handler: @escaping @Sendable () -> Void) -> (any DispatchSourceFileSystemObject)? {
+    private func makeSource(path: String, handler: @escaping @Sendable () -> Void) -> (
+        any DispatchSourceFileSystemObject
+    )? {
         let descriptor = open(path, O_EVTONLY | O_CLOEXEC)
         guard descriptor >= 0 else { return nil }
         let source = DispatchSource.makeFileSystemObjectSource(
@@ -127,7 +129,9 @@ private final class ConfigWatchWorker: @unchecked Sendable {
         guard force || data != lastData else { return }
         lastData = data
         do {
-            guard let source = String(data: data, encoding: .utf8) else { throw ConfigWatchError.invalidEncoding }
+            guard let source = String(data: data, encoding: .utf8) else {
+                throw ConfigWatchError.invalidEncoding
+            }
             deliver(.success(try AppConfig.parse(source)))
         } catch {
             deliver(.failure(error))

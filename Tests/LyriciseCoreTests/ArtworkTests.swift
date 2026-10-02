@@ -1,13 +1,15 @@
 import Foundation
 import Testing
+
 @testable import LyriciseCore
 
 @Suite("Spotify album artwork")
 struct ArtworkTests {
     private func snapshot(artworkURL: String? = nil) -> Snapshot {
-        Snapshot(trackID: "track", title: "Title", artist: "Artist", position: 0,
-                 duration: 200000, playing: false, status: "ready", sequence: 1,
-                 session: "session", artworkURL: artworkURL)
+        Snapshot(
+            trackID: "track", title: "Title", artist: "Artist", position: 0,
+            duration: 200000, playing: false, status: "ready", sequence: 1,
+            session: "session", artworkURL: artworkURL)
     }
 
     @Test func missingArtworkRemainsWireCompatible() throws {
@@ -22,7 +24,7 @@ struct ArtworkTests {
         "https://i.scdn.co/image/abc123",
         "https://image-cdn-ak.spotifycdn.com/image/abc123",
         "https://image-cdn-fa.spotifycdn.com/image/abc123",
-        "https://i.scdn.co:443/image/abc123?size=300"
+        "https://i.scdn.co:443/image/abc123?size=300",
     ])
     func acceptsSpotifyArtwork(url: String) throws {
         #expect(try snapshot(artworkURL: url).validated().artworkURL == url)
@@ -34,7 +36,7 @@ struct ArtworkTests {
         "https://localhost/image", "https://127.0.0.1/image",
         "https://user@i.scdn.co/image", "https://user:secret@i.scdn.co/image",
         "https://i.scdn.co:8080/image", "https://i.scdn.co/image#fragment",
-        "https://i.scdn.co/image with spaces", "", "//i.scdn.co/image"
+        "https://i.scdn.co/image with spaces", "", "//i.scdn.co/image",
     ])
     func rejectsUntrustedOrMalformedArtwork(url: String) {
         #expect(throws: ModelError.self) { try snapshot(artworkURL: url).validated() }

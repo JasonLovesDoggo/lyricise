@@ -15,11 +15,15 @@ import Darwin
         RTLD_LAZY | RTLD_LOCAL
     )
     private static let connection: ConnectionFunction? = {
-        guard let framework, let symbol = dlsym(framework, "CGSDefaultConnectionForThread") else { return nil }
+        guard let framework, let symbol = dlsym(framework, "CGSDefaultConnectionForThread") else {
+            return nil
+        }
         return unsafeBitCast(symbol, to: ConnectionFunction.self)
     }()
     private static let setRadius: BlurFunction? = {
-        guard let framework, let symbol = dlsym(framework, "CGSSetWindowBackgroundBlurRadius") else { return nil }
+        guard let framework, let symbol = dlsym(framework, "CGSSetWindowBackgroundBlurRadius") else {
+            return nil
+        }
         return unsafeBitCast(symbol, to: BlurFunction.self)
     }()
 
@@ -28,9 +32,10 @@ import Darwin
     /// leave the ordinary transparent background in place in that case.
     @discardableResult static func apply(radius: Int, window: NSWindow) -> Bool {
         guard (0...100).contains(radius), window.windowNumber > 0,
-              let connection, let setRadius, let connectionID = connection()
+            let connection, let setRadius, let connectionID = connection()
         else { return false }
-        let effectiveRadius = NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency ? 0 : radius
+        let effectiveRadius =
+            NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency ? 0 : radius
         return setRadius(connectionID, UInt(window.windowNumber), Int32(effectiveRadius)) == 0
     }
 }

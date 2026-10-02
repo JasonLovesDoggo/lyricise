@@ -1,4 +1,5 @@
 import Testing
+
 @testable import LyriciseCore
 
 @Test func configSerializationPreservesAllSettings() throws {

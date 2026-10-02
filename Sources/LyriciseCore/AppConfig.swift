@@ -17,43 +17,57 @@ public struct AppConfig: Sendable, Equatable {
     public init() {}
     public static func parse(_ source: String) throws -> Self {
         let decoded = try TOMLDecoder().decode(FileConfig.self, from: source)
-        var c = Self()
-        if let w = decoded.window {
-            c.width = w.width ?? c.width; c.height = w.height ?? c.height
-            c.alwaysOnTop = w.always_on_top ?? c.alwaysOnTop; c.allSpaces = w.all_spaces ?? c.allSpaces
-            c.rememberPosition = w.remember_position ?? c.rememberPosition
+        var config = Self()
+        if let window = decoded.window {
+            config.width = window.width ?? config.width
+            config.height = window.height ?? config.height
+            config.alwaysOnTop = window.always_on_top ?? config.alwaysOnTop
+            config.allSpaces = window.all_spaces ?? config.allSpaces
+            config.rememberPosition = window.remember_position ?? config.rememberPosition
         }
-        if let a = decoded.appearance {
-            c.background = a.background ?? c.background; c.accent = a.accent ?? c.accent
-            c.text = a.text ?? c.text; c.mutedText = a.muted_text ?? c.mutedText
-            c.opacity = a.background_opacity ?? c.opacity; c.blurRadius = a.blur?.radius ?? c.blurRadius
-            c.font = a.font ?? c.font; c.fontSize = a.font_size ?? c.fontSize; c.padding = a.padding ?? c.padding
-            c.cornerRadius = a.corner_radius ?? c.cornerRadius
+        if let appearance = decoded.appearance {
+            config.background = appearance.background ?? config.background
+            config.accent = appearance.accent ?? config.accent
+            config.text = appearance.text ?? config.text
+            config.mutedText = appearance.muted_text ?? config.mutedText
+            config.opacity = appearance.background_opacity ?? config.opacity
+            config.blurRadius = appearance.blur?.radius ?? config.blurRadius
+            config.font = appearance.font ?? config.font
+            config.fontSize = appearance.font_size ?? config.fontSize
+            config.padding = appearance.padding ?? config.padding
+            config.cornerRadius = appearance.corner_radius ?? config.cornerRadius
         }
-        if let l = decoded.lyrics {
-            c.showTrackTitle = l.show_track_title ?? c.showTrackTitle
-            c.showArtwork = l.show_album_art ?? c.showArtwork
-            c.followPlayback = l.follow_playback ?? c.followPlayback; c.offsetMS = l.offset_ms ?? c.offsetMS
+        if let lyrics = decoded.lyrics {
+            config.showTrackTitle = lyrics.show_track_title ?? config.showTrackTitle
+            config.showArtwork = lyrics.show_album_art ?? config.showArtwork
+            config.followPlayback = lyrics.follow_playback ?? config.followPlayback
+            config.offsetMS = lyrics.offset_ms ?? config.offsetMS
         }
-        guard (260...2000).contains(c.width), (120...2000).contains(c.height),
-              (0...1).contains(c.opacity), (10...72).contains(c.fontSize), (0...80).contains(c.padding),
-              (0...40).contains(c.cornerRadius), (0...100).contains(c.blurRadius),
-              (-10000...10000).contains(c.offsetMS), !c.font.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              c.font.count <= 256,
-              [c.background,c.accent,c.text,c.mutedText].allSatisfy(Self.validColor)
+        guard (260...2000).contains(config.width), (120...2000).contains(config.height),
+            (0...1).contains(config.opacity), (10...72).contains(config.fontSize),
+            (0...80).contains(config.padding),
+            (0...40).contains(config.cornerRadius), (0...100).contains(config.blurRadius),
+            (-10000...10000).contains(config.offsetMS),
+            !config.font.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            config.font.count <= 256,
+            [config.background, config.accent, config.text, config.mutedText].allSatisfy(Self.validColor)
         else { throw ConfigError.invalidValue }
-        return c
+        return config
     }
     /// Serializes all supported settings. TOML comments and unknown keys are not retained.
     public func serialized() throws -> String {
         let file = FileConfig(
-            window: .init(width: width, height: height, always_on_top: alwaysOnTop,
-                          all_spaces: allSpaces, remember_position: rememberPosition),
-            appearance: .init(background: background, background_opacity: opacity, blur: .init(radius: blurRadius),
-                              accent: accent, text: text, muted_text: mutedText, font: font,
-                              font_size: fontSize, padding: padding, corner_radius: cornerRadius),
-            lyrics: .init(show_track_title: showTrackTitle, show_album_art: showArtwork, follow_playback: followPlayback,
-                          offset_ms: offsetMS)
+            window: .init(
+                width: width, height: height, always_on_top: alwaysOnTop,
+                all_spaces: allSpaces, remember_position: rememberPosition),
+            appearance: .init(
+                background: background, background_opacity: opacity, blur: .init(radius: blurRadius),
+                accent: accent, text: text, muted_text: mutedText, font: font,
+                font_size: fontSize, padding: padding, corner_radius: cornerRadius),
+            lyrics: .init(
+                show_track_title: showTrackTitle, show_album_art: showArtwork,
+                follow_playback: followPlayback,
+                offset_ms: offsetMS)
         )
         let source = try TOMLEncoder().encodeToString(file)
         _ = try Self.parse(source)
@@ -62,47 +76,59 @@ public struct AppConfig: Sendable, Equatable {
 
     private static func validColor(_ value: String) -> Bool {
         let bytes = Array(value.utf8)
-        return bytes.count == 7 && bytes.first == 35 && bytes.dropFirst().allSatisfy {
-            (48...57).contains($0) || (65...70).contains($0) || (97...102).contains($0)
-        }
+        return bytes.count == 7 && bytes.first == 35
+            && bytes.dropFirst().allSatisfy { byte in
+                (48...57).contains(byte) || (65...70).contains(byte) || (97...102).contains(byte)
+            }
     }
     public static let example = """
-    # Lyricise — changes are applied while the app is running.
-    [window]
-    width = 420
-    height = 300
-    always_on_top = true
-    all_spaces = true
-    remember_position = true
+        # Lyricise — changes are applied while the app is running.
+        [window]
+        width = 420
+        height = 300
+        always_on_top = true
+        all_spaces = true
+        remember_position = true
 
-    [appearance]
-    background = "#1e1e2e"
-    background_opacity = 0.75
-    blur = 0
-    accent = "#b4befe"
-    text = "#cdd6f4"
-    muted_text = "#6c7086"
-    font = "SF Pro"
-    font_size = 20
-    padding = 16
-    corner_radius = 12
+        [appearance]
+        background = "#1e1e2e"
+        background_opacity = 0.75
+        blur = 0
+        accent = "#b4befe"
+        text = "#cdd6f4"
+        muted_text = "#6c7086"
+        font = "SF Pro"
+        font_size = 20
+        padding = 16
+        corner_radius = 12
 
-    [lyrics]
-    show_track_title = true
-    show_album_art = false
-    follow_playback = true
-    offset_ms = 0
-    """
+        [lyrics]
+        show_track_title = true
+        show_album_art = false
+        follow_playback = true
+        offset_ms = 0
+        """
 }
 public enum ConfigError: LocalizedError {
     case invalidValue
-    public var errorDescription: String? { "Check colors (#RRGGBB), window size (260–2000 × 120–2000), opacity (0–1), blur (0–100), font size (10–72), padding (0–80), corner radius (0–40), and offset (±10000 ms)." }
+    public var errorDescription: String? {
+        "Check colors (#RRGGBB), window size (260–2000 × 120–2000), opacity (0–1), blur (0–100), font size (10–72), padding (0–80), corner radius (0–40), and offset (±10000 ms)."
+    }
 }
 private struct FileConfig: Codable {
     var window: Window?, appearance: Appearance?, lyrics: Lyrics?
-    struct Window: Codable { var width: Double?, height: Double?, always_on_top: Bool?, all_spaces: Bool?, remember_position: Bool? }
-    struct Appearance: Codable { var background: String?, background_opacity: Double?, blur: BlurValue?, accent: String?, text: String?, muted_text: String?, font: String?, font_size: Double?, padding: Double?, corner_radius: Double? }
-    struct Lyrics: Codable { var show_track_title: Bool?, show_album_art: Bool?, follow_playback: Bool?, offset_ms: Double? }
+    struct Window: Codable {
+        var width: Double?, height: Double?, always_on_top: Bool?, all_spaces: Bool?,
+            remember_position: Bool?
+    }
+    struct Appearance: Codable {
+        var background: String?, background_opacity: Double?, blur: BlurValue?, accent: String?,
+            text: String?, muted_text: String?, font: String?, font_size: Double?, padding: Double?,
+            corner_radius: Double?
+    }
+    struct Lyrics: Codable {
+        var show_track_title: Bool?, show_album_art: Bool?, follow_playback: Bool?, offset_ms: Double?
+    }
 }
 
 /// Reads legacy Boolean blur settings, but always writes the numeric intensity.
