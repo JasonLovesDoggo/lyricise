@@ -6,13 +6,15 @@ public struct AppConfig: Sendable, Equatable {
     public var alwaysOnTop = true, allSpaces = true, rememberPosition = true
     public var background = "#1e1e2e", accent = "#b4befe", text = "#cdd6f4", mutedText = "#6c7086"
     public var opacity = 0.75, fontSize = 20.0, padding = 16.0, cornerRadius = 12.0
+    public var borderColor = "#b4befe", borderWidth = 0.0
     public var blurRadius = 0
     public var blur: Bool {
         get { blurRadius > 0 }
         set { blurRadius = newValue ? (blurRadius > 0 ? blurRadius : 20) : 0 }
     }
-    public var showTrackTitle = true, followPlayback = true
-    public var showArtwork = false
+    public var trackTitleVisibility = ContentVisibility.always
+    public var artworkVisibility = ContentVisibility.never
+    public var followPlayback = true
     public var font = "SF Pro", offsetMS = 0.0
     public init() {}
     public static func parse(_ source: String) throws -> Self {
@@ -36,21 +38,23 @@ public struct AppConfig: Sendable, Equatable {
             config.fontSize = appearance.font_size ?? config.fontSize
             config.padding = appearance.padding ?? config.padding
             config.cornerRadius = appearance.corner_radius ?? config.cornerRadius
+            config.borderColor = appearance.border_color ?? config.borderColor
+            config.borderWidth = appearance.border_width ?? config.borderWidth
         }
         if let lyrics = decoded.lyrics {
-            config.showTrackTitle = lyrics.show_track_title ?? config.showTrackTitle
-            config.showArtwork = lyrics.show_album_art ?? config.showArtwork
+            config.trackTitleVisibility = lyrics.show_track_title ?? config.trackTitleVisibility
+            config.artworkVisibility = lyrics.show_album_art ?? config.artworkVisibility
             config.followPlayback = lyrics.follow_playback ?? config.followPlayback
             config.offsetMS = lyrics.offset_ms ?? config.offsetMS
         }
         guard (260...2000).contains(config.width), (120...2000).contains(config.height),
             (0...1).contains(config.opacity), (10...72).contains(config.fontSize),
             (0...80).contains(config.padding),
-            (0...40).contains(config.cornerRadius), (0...100).contains(config.blurRadius),
+            (0...12).contains(config.borderWidth), (0...40).contains(config.cornerRadius), (0...100).contains(config.blurRadius),
             (-10000...10000).contains(config.offsetMS),
             !config.font.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             config.font.count <= 256,
-            [config.background, config.accent, config.text, config.mutedText].allSatisfy(Self.validColor)
+            [config.background, config.accent, config.text, config.mutedText, config.borderColor].allSatisfy(Self.validColor)
         else { throw ConfigError.invalidValue }
         return config
     }
@@ -63,9 +67,10 @@ public struct AppConfig: Sendable, Equatable {
             appearance: .init(
                 background: background, background_opacity: opacity, blur: .init(radius: blurRadius),
                 accent: accent, text: text, muted_text: mutedText, font: font,
-                font_size: fontSize, padding: padding, corner_radius: cornerRadius),
+                font_size: fontSize, padding: padding, corner_radius: cornerRadius,
+                border_color: borderColor, border_width: borderWidth),
             lyrics: .init(
-                show_track_title: showTrackTitle, show_album_art: showArtwork,
+                show_track_title: trackTitleVisibility, show_album_art: artworkVisibility,
                 follow_playback: followPlayback,
                 offset_ms: offsetMS)
         )
@@ -99,7 +104,7 @@ public enum ConfigError: LocalizedError {
         case .missingDefaultResource:
             "The bundled default configuration is missing. Reinstall Lyricise to restore it."
         case .invalidValue:
-            "Check colors (#RRGGBB), window size (260–2000 × 120–2000), opacity (0–1), blur (0–100), font size (10–72), padding (0–80), corner radius (0–40), and offset (±10000 ms)."
+            "Check colors (#RRGGBB), window size (260–2000 × 120–2000), opacity (0–1), blur (0–100), font size (10–72), padding (0–80), corner radius (0–40), border width (0–12), and offset (±10000 ms)."
         }
     }
 }
@@ -112,10 +117,11 @@ private struct FileConfig: Codable {
     struct Appearance: Codable {
         var background: String?, background_opacity: Double?, blur: BlurValue?, accent: String?,
             text: String?, muted_text: String?, font: String?, font_size: Double?, padding: Double?,
-            corner_radius: Double?
+            corner_radius: Double?, border_color: String?, border_width: Double?
     }
     struct Lyrics: Codable {
-        var show_track_title: Bool?, show_album_art: Bool?, follow_playback: Bool?, offset_ms: Double?
+        var show_track_title: ContentVisibility?, show_album_art: ContentVisibility?
+        var follow_playback: Bool?, offset_ms: Double?
     }
 }
 

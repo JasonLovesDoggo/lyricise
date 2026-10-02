@@ -17,9 +17,12 @@ font = "SF Pro"
 font_size = 20
 padding = 16
 corner_radius = 12
+border_color = "#b4befe"
+border_width = 0 # 0 hides the border; 0–12 pt
 
 [lyrics]
-show_track_title = true
-show_album_art = false
+# never, hover, or always
+show_track_title = "always"
+show_album_art = "never"
 follow_playback = true
 offset_ms = 0
