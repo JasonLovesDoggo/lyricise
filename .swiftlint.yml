@@ -1,0 +1,85 @@
+# Swift checks for Lyricise.
+# Companion config: jevlint v0.1.0 cannot parse Swift.
+# Requires SwiftLint; this file does not install it.
+# Sources:
+# https://realm.github.io/SwiftLint/rule-directory.html
+# https://www.swift.org/documentation/api-design-guidelines/
+# Review architectural issues separately: protocol/AnyView overuse, hidden
+# dependencies, unrelated responsibilities, and unclear task ownership.
+# Prefer Swift compiler concurrency checking for actor/Sendable correctness.
+# Thresholds below are starting points for review, not universal design limits.
+# For a justified exception, disable only the relevant rule on the next line
+# and explain the invariant, e.g. a constant fixture known to be valid.
+
+excluded:
+  - .build
+  - DerivedData
+  - Pods
+  - Carthage
+  - build
+  - Generated
+  - vendor
+
+only_rules:
+  # Crash-prone operations and ownership mistakes.
+  - force_cast
+  - force_try
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - weak_delegate
+  - class_delegate_protocol
+  - discarded_notification_center_observer
+  - notification_center_detachment
+  - unowned_variable_capture
+  - fatal_error_message
+  # Hard-to-follow APIs and control flow.
+  - cyclomatic_complexity
+  - function_parameter_count
+  - large_tuple
+  - anonymous_argument_in_multiline_closure
+  - multiple_closures_with_trailing_closure
+  # Redundant or suspicious logic.
+  - duplicate_conditions
+  - duplicate_enum_cases
+  - duplicated_key_in_dictionary_literal
+  - identical_operands
+  - unused_closure_parameter
+  - unused_optional_binding
+  - unused_setter_value
+  - unused_enumerated
+  - redundant_nil_coalescing
+  - redundant_type_annotation
+  - unneeded_override
+  - return_value_from_void_function
+  # Clear collection intent and meaningful test failures.
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - first_where
+  - empty_count
+  - empty_xctest_method
+  - xctfail_message
+  - blanket_disable_command
+  - superfluous_disable_command
+
+# Review intentional force operations instead of replacing crashes with silent
+# default values. Prefer guard/if let, throwing APIs, or XCTUnwrap in tests.
+force_cast: warning
+force_try: warning
+force_unwrapping: warning
+implicitly_unwrapped_optional:
+  severity: warning
+  mode: all_except_iboutlets
+
+cyclomatic_complexity:
+  warning: 12
+  error: 25
+  ignores_case_statements: true
+
+function_parameter_count:
+  warning: 6
+  error: 10
+  ignores_default_parameters: true
+
+large_tuple:
+  warning: 3
+  error: 5

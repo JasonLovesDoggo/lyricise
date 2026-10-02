@@ -1,0 +1,668 @@
+{
+  "languages": {
+    "cpp": {},
+    "javascript": {},
+    "python": {}
+  },
+  "minConfidence": 0.85,
+  "rules": [
+    {
+      "id": "clear-names",
+      "description": "Fail when a name hides or misstates its role: unrelated values called data or result, unexplained abbreviations, or a function name that omits a surprising write or destructive action. Judge names in their enclosing context. Short loop indices, conventional math names, external API names, and an obvious local result pass. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "function",
+        "type",
+        "field"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    },
+    {
+      "id": "readable-control-flow",
+      "description": "Fail when following the main path requires untangling nested conditions, repeated negations, or intertwined branches that can be simplified without changing behavior. Suggest guards or meaningful helpers only when they clarify intent. A long but linear function, exhaustive switch, parser, and naturally nested traversal can pass. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "function"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    },
+    {
+      "id": "cohesive-responsibilities",
+      "description": "Fail when one unit implements unrelated policies that need independent changes, such as presentation formatting mixed with persistence internals and business decisions. A function that clearly coordinates these operations through named dependencies passes. Do not require a class per operation or splitting merely because a unit is long. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "function",
+        "type"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    },
+    {
+      "id": "abstractions-earn-their-cost",
+      "description": "Fail when visible wrappers, generic parameters, factories, or mode switches add concepts and navigation without hiding meaningful complexity or expressing a useful contract. Require evidence in the supplied code. A single implementation or single caller alone is not evidence. Naming helpers, test seams, adapters, domain types, and framework hooks pass. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "function",
+        "type"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    },
+    {
+      "id": "avoid-unrelated-generalization",
+      "description": "Fail when a shared API combines visibly unrelated operations and callers must select a mode or supply dummy parameters to recover their distinct behavior. Keep separate concepts separate. A cohesive algorithm with genuine variation, public extension point, or shared invariant passes. Do not speculate about unseen callers or future requirements. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "function",
+        "type"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    },
+    {
+      "id": "honest-parameters",
+      "description": "Fail when parameter names or boolean mode combinations make the operation ambiguous or permit contradictory choices visible in the implementation. Prefer meaningful labels, distinct operations, or a mode type where helpful. Natural boolean settings, independent CLI flags, and clear framework signatures pass. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "function"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    },
+    {
+      "id": "explicit-domain-state",
+      "description": "Fail when visible logic relies on a fragile combination of nullable fields, strings, or booleans to represent mutually exclusive states, permitting contradictions the code must repeatedly repair. Do not demand a new type for every primitive. External schemas and genuinely independent flags pass. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "type"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true
+    },
+    {
+      "id": "one-source-of-truth",
+      "description": "Fail when writable fields duplicate a cheaply derivable fact and visible update paths can leave them inconsistent. Require evidence of that duplicated relationship. Snapshots, intentionally cached values with a clear invalidation path, persisted schemas, and measured data layouts pass. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "type"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true
+    },
+    {
+      "id": "local-and-purposeful-mutation",
+      "description": "Fail when a variable changes conceptual meaning midway through the function, distant writes obscure its value, or unrelated operations mutate shared state. Ordinary counters, accumulators, in-place algorithms, and explicit state transitions pass. Do not recommend an expensive immutable rewrite just to remove assignment. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "function"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    },
+    {
+      "id": "visible-dependencies",
+      "description": "Fail when domain behavior secretly reads or changes mutable global configuration or a service locator instead of making the dependency visible in its inputs or owning object. Entry points and composition code may read process configuration. Constants, conventional logging, and metrics pass. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "function"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    },
+    {
+      "id": "errors-remain-errors",
+      "description": "Fail when a failed required operation is discarded, caught without handling, or replaced by a success-shaped value that prevents the caller from distinguishing failure. Logging alone is insufficient if success is still reported incorrectly. Intentional best-effort cleanup, a documented optional lookup, and an explicit recovery outcome pass. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "error",
+      "kinds": [
+        "function"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    },
+    {
+      "id": "preserve-error-context",
+      "description": "Fail when replacing or rethrowing an error loses the original cause and the information needed to identify the failed operation. Respect the language and API error contract. Sanitizing a public response passes when the original diagnostic is retained internally without secrets. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "function"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    },
+    {
+      "id": "explain-domain-literals",
+      "description": "Fail when an unexplained number or string controls a non-obvious domain policy, unit conversion, retry limit, or state transition. A descriptive local name or useful comment may suffice. Obvious arithmetic, test expectations, examples, UI text, and literals already explained by an argument label pass. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "function"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    },
+    {
+      "id": "readable-expressions",
+      "description": "Fail dense nested ternaries, chained transformations, or side-effectful expressions when understanding the intermediate values requires mentally executing several unrelated steps. A simple chain or idiomatic expression passes. Prefer named intermediate concepts only where they reduce the reading burden. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "function"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    },
+    {
+      "id": "consistent-domain-decisions",
+      "description": "Fail when the supplied code repeats the same business decision in independent branches and makes inconsistent edits likely. Require actual repeated policy, not similar syntax. Small setup duplication, separate domain concepts, and isolated test cases pass; do not force a shared helper that needs extra switches. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "function"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    },
+    {
+      "id": "predictable-side-effects",
+      "description": "Fail getters, predicates, conversions, or ordinary object initialization that unexpectedly trigger externally visible writes or expensive I/O without communicating that contract. Resource acquisition APIs, explicit loaders, and framework lifecycle callbacks pass. Judge the actual contract, not a blanket ban on effects. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "function"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    },
+    {
+      "id": "comments-add-information",
+      "description": "Fail comments that only narrate obvious syntax, contain abandoned executable code, or contradict the visible implementation. Explanations of constraints, invariants, workarounds, and non-obvious decisions pass. Licenses, section headings, meaningful TODOs, and instructional examples pass. Do not require comments on self-explanatory code. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "comment"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true
+    },
+    {
+      "id": "docs-match-behavior",
+      "description": "Fail documentation that contradicts visible return values, error behavior, units, mutation, or required preconditions. Missing documentation alone passes. If verifying a claim requires unavailable code, abstain. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "docComment"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true
+    },
+    {
+      "id": "tests-observe-behavior",
+      "description": "For tests, fail when the assertions can pass despite the behavior under test being broken, such as checking only a mock setup or repeating the implementation to compute the expected result. Tests of an intentional interaction contract and small arithmetic expectations pass. Skip production functions and abstain when the relevant behavior is not visible. Report only a concrete issue supported by the supplied context; abstain when essential evidence is missing.",
+      "severity": "warning",
+      "kinds": [
+        "function"
+      ],
+      "include": [
+        "**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.git/**",
+        "**/.next/**",
+        "**/.svelte-kit/**",
+        "**/.build/**",
+        "**/DerivedData/**",
+        "**/Pods/**",
+        "**/Carthage/**",
+        "**/generated/**",
+        "**/Generated/**",
+        "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.pb.go"
+      ],
+      "allowSkip": true,
+      "allowAbstain": true,
+      "context": {
+        "callees": true
+      }
+    }
+  ]
+}
