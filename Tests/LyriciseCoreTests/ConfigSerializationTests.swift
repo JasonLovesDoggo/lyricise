@@ -18,8 +18,10 @@ import Testing
     config.padding = 23.5
     config.cornerRadius = 22.5
     config.blurRadius = 37
-    config.showTrackTitle = false
-    config.showArtwork = true
+    config.borderColor = "#123456"
+    config.borderWidth = 2.5
+    config.trackTitleVisibility = .hover
+    config.artworkVisibility = .always
     config.followPlayback = false
     config.font = "A \"Quoted\" Font \\ Variant"
     config.offsetMS = -125.5
@@ -36,11 +38,11 @@ import Testing
 }
 
 @Test func artworkIsOptInAndIndependentOfTrackTitle() throws {
-    #expect(AppConfig().showArtwork == false)
-    #expect(try AppConfig.parse("[lyrics]\nshow_track_title = false").showArtwork == false)
+    #expect(AppConfig().artworkVisibility == .never)
+    #expect(try AppConfig.parse("[lyrics]\nshow_track_title = false").artworkVisibility == .never)
     let config = try AppConfig.parse("[lyrics]\nshow_album_art = true\nshow_track_title = false")
-    #expect(config.showArtwork)
-    #expect(config.showTrackTitle == false)
+    #expect(config.artworkVisibility == .always)
+    #expect(config.trackTitleVisibility == .never)
 }
 
 @Test func cornerRadiusDefaultsAndBounds() throws {
@@ -73,4 +75,28 @@ import Testing
             try AppConfig.parse("[appearance]\nblur = \(invalid)")
         }
     }
+}
+
+@Test func contentVisibilityCompatibilityAndModes() throws {
+    for visibility in ContentVisibility.allCases {
+        let config = try AppConfig.parse("[lyrics]\nshow_track_title = '\(visibility.rawValue)'\nshow_album_art = '\(visibility.rawValue)'")
+        #expect(config.trackTitleVisibility == visibility)
+        #expect(config.artworkVisibility == visibility)
+        #expect(try AppConfig.parse(config.serialized()) == config)
+        #expect(visibility.isVisible(hovering: false) == (visibility == .always))
+        #expect(visibility.isVisible(hovering: true) == (visibility != .never))
+    }
+    #expect(throws: (any Error).self) { try AppConfig.parse("[lyrics]\nshow_album_art = 'sometimes'") }
+}
+
+@Test func borderDefaultsAndBounds() throws {
+    #expect(AppConfig().borderWidth == 0)
+    #expect(try AppConfig.parse("[appearance]\nborder_width = 3\nborder_color = '#b4befe'").borderWidth == 3)
+    for invalid in ["-1", "12.1", "nan", "inf"] {
+        #expect(throws: (any Error).self) { try AppConfig.parse("[appearance]\nborder_width = \(invalid)") }
+    }
+    #expect(throws: (any Error).self) { try AppConfig.parse("[appearance]\nborder_color = 'lavender'") }
+    #expect(NumericSettingInput.borderWidth.parse("3pt") == 3)
+    #expect(NumericSettingInput.borderWidth.parse("0") == 0)
+    #expect(NumericSettingInput.borderWidth.parse("13") == nil)
 }

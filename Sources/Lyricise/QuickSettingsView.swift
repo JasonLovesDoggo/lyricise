@@ -39,7 +39,8 @@ import SwiftUI
                 }
                 Slider(
                     value: Binding(
-                        get: { store.config.fontSize }, set: { store.config.fontSize = $0.rounded() }),
+                        get: { store.config.fontSize },
+                        set: { store.settings.preview(\.fontSize, to: $0.rounded()) }),
                     in: 10...72
                 ) { editing in
                     if !editing { store.set(\.fontSize, to: store.config.fontSize) }
@@ -57,15 +58,39 @@ import SwiftUI
                 Slider(
                     value: Binding(
                         get: { Double(store.config.blurRadius) },
-                        set: { store.config.blurRadius = Int($0.rounded()) }), in: 0...100
+                        set: { store.settings.preview(\.blurRadius, to: Int($0.rounded())) }), in: 0...100
                 ) { editing in
                     if !editing { store.set(\.blurRadius, to: store.config.blurRadius) }
                 }.accessibilityLabel("Blur intensity")
             }
+            HStack {
+                ColorPicker("Border", selection: Binding(
+                    get: { Color(hex: store.config.borderColor) },
+                    set: { color in
+                        guard let rgb = NSColor(color).usingColorSpace(.sRGB) else { return }
+                        let hex = String(format: "#%02x%02x%02x", Int((rgb.redComponent * 255).rounded()),
+                                         Int((rgb.greenComponent * 255).rounded()),
+                                         Int((rgb.blueComponent * 255).rounded()))
+                        store.set(\.borderColor, to: hex)
+                    }), supportsOpacity: false)
+                NumericSettingField(kind: .borderWidth, value: store.config.borderWidth) { width in
+                    store.set(\.borderWidth, to: width)
+                }.frame(width: 50, height: 18)
+                Stepper("Border width", value: setting(\.borderWidth), in: 0...12, step: 0.5)
+                    .labelsHidden()
+            }
             Toggle("Always on top", isOn: setting(\.alwaysOnTop))
             Toggle("Show on all Spaces", isOn: setting(\.allSpaces))
-            Toggle("Show song and artist", isOn: setting(\.showTrackTitle))
-            Toggle("Show album cover", isOn: setting(\.showArtwork))
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Song details")
+                VisibilityPicker(title: "Song details", selection: setting(\.trackTitleVisibility))
+                    .pickerStyle(.segmented).labelsHidden()
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Album cover")
+                VisibilityPicker(title: "Album cover", selection: setting(\.artworkVisibility))
+                    .pickerStyle(.segmented).labelsHidden()
+            }
             Toggle("Follow current lyric", isOn: setting(\.followPlayback))
             if let error = store.configError {
                 Text(error).font(.caption).foregroundStyle(.red).fixedSize(
@@ -141,5 +166,18 @@ import SwiftUI
         defer { focusingFromClick = false }
         window?.makeFirstResponder(self)
         selectText(nil)
+    }
+}
+
+struct VisibilityPicker: View {
+    let title: String
+    @Binding var selection: ContentVisibility
+
+    var body: some View {
+        Picker(title, selection: $selection) {
+            ForEach(ContentVisibility.allCases, id: \.self) { visibility in
+                Text(visibility.label).tag(visibility)
+            }
+        }
     }
 }
