@@ -33,7 +33,7 @@ import SwiftUI
                 HStack {
                     Text("Font size")
                     Spacer()
-                    FontSizeField(size: store.config.fontSize) { size in
+                    NumericSettingField(kind: .fontSize, value: store.config.fontSize) { size in
                         store.set(\.fontSize, to: size)
                     }
                 }
@@ -50,8 +50,9 @@ import SwiftUI
                 HStack {
                     Text("Blur intensity")
                     Spacer()
-                    Text(store.config.blurRadius == 0 ? "Off" : "\(store.config.blurRadius)")
-                        .monospacedDigit().foregroundStyle(.secondary)
+                    NumericSettingField(kind: .blur, value: Double(store.config.blurRadius)) { value in
+                        store.set(\.blurRadius, to: Int(value))
+                    }
                 }
                 Slider(
                     value: Binding(
@@ -78,48 +79,54 @@ import SwiftUI
     }
 }
 
-/// Keeps incomplete edits local until they can be validated and saved.
-@MainActor private struct FontSizeField: View {
-    let size: Double
+/// Display values stay inert until clicked; incomplete edits remain local.
+@MainActor private struct NumericSettingField: View {
+    let kind: NumericSettingInput
+    let value: Double
     let commit: (Double) -> Void
     @State private var draft = ""
-    @FocusState private var isEditing: Bool
+    @State private var isEditing = false
+    @FocusState private var isFocused: Bool
 
     var body: some View {
-        TextField("Font size", text: $draft)
-            .textFieldStyle(.plain)
-            .multilineTextAlignment(.trailing)
-            .monospacedDigit()
-            .foregroundStyle(.secondary)
-            .frame(width: 70)
-            .focused($isEditing)
-            .accessibilityLabel("Font size in points")
-            .help("Enter a size from 10 to 72 pt")
-            .onAppear { resetDraft() }
-            .onChange(of: size) {
-                if !isEditing { resetDraft() }
+        Group {
+            if isEditing {
+                TextField(kind.label, text: $draft)
+                    .textFieldStyle(.plain)
+                    .multilineTextAlignment(.trailing)
+                    .focused($isFocused)
+                    .onAppear { isFocused = true }
+                    .onSubmit { finishEditing() }
+                    .onExitCommand { finishEditing(save: false) }
+                    .onChange(of: isFocused) {
+                        if !isFocused { finishEditing() }
+                    }
+            } else {
+                Button {
+                    draft = kind.display(value)
+                    isEditing = true
+                } label: {
+                    Text(kind.display(value))
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
-            .onChange(of: isEditing) {
-                if !isEditing { saveDraft() }
-            }
-            .onSubmit { isEditing = false }
-            .onExitCommand {
-                resetDraft()
-                isEditing = false
-            }
-            .onDisappear {
-                if isEditing { saveDraft() }
-            }
-    }
-
-    private func saveDraft() {
-        if let value = FontSizeInput.parse(draft), value != size {
-            commit(value)
         }
-        resetDraft()
+        .monospacedDigit()
+        .foregroundStyle(.secondary)
+        .frame(width: 70)
+        .accessibilityLabel(kind.label)
+        .help(kind.help)
+        .onDisappear { finishEditing() }
     }
 
-    private func resetDraft() {
-        draft = FontSizeInput.display(size)
+    private func finishEditing(save: Bool = true) {
+        guard isEditing else { return }
+        isEditing = false
+        isFocused = false
+        if save, let number = kind.parse(draft), number != value {
+            commit(number)
+        }
     }
 }
