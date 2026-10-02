@@ -6,7 +6,8 @@ let package = Package(
     products: [.library(name: "LyriciseCore", targets: ["LyriciseCore"])],
     dependencies: [.package(url: "https://github.com/mattt/swift-toml.git", from: "2.0.0")],
     targets: [
-        .target(name: "LyriciseCore", dependencies: [.product(name: "TOML", package: "swift-toml")])
+        .target(name: "LyriciseCore", dependencies: [.product(name: "TOML", package: "swift-toml")]),
+        .testTarget(name: "LyriciseCoreTests", dependencies: ["LyriciseCore"])
     ],
     swiftLanguageModes: [.v6]
 )
