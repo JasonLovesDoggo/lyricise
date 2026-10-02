@@ -35,7 +35,7 @@ import SwiftUI
                     Spacer()
                     NumericSettingField(kind: .fontSize, value: store.config.fontSize) { size in
                         store.set(\.fontSize, to: size)
-                    }
+                    }.frame(width: 70, height: 18)
                 }
                 Slider(
                     value: Binding(
@@ -52,7 +52,7 @@ import SwiftUI
                     Spacer()
                     NumericSettingField(kind: .blur, value: Double(store.config.blurRadius)) { value in
                         store.set(\.blurRadius, to: Int(value))
-                    }
+                    }.frame(width: 70, height: 18)
                 }
                 Slider(
                     value: Binding(
@@ -79,54 +79,67 @@ import SwiftUI
     }
 }
 
-/// Display values stay inert until clicked; incomplete edits remain local.
-@MainActor private struct NumericSettingField: View {
+/// A native field accepts the first click without taking focus when the popover opens.
+@MainActor private struct NumericSettingField: NSViewRepresentable {
     let kind: NumericSettingInput
     let value: Double
     let commit: (Double) -> Void
-    @State private var draft = ""
-    @State private var isEditing = false
-    @FocusState private var isFocused: Bool
 
-    var body: some View {
-        Group {
-            if isEditing {
-                TextField(kind.label, text: $draft)
-                    .textFieldStyle(.plain)
-                    .multilineTextAlignment(.trailing)
-                    .focused($isFocused)
-                    .onAppear { isFocused = true }
-                    .onSubmit { finishEditing() }
-                    .onExitCommand { finishEditing(save: false) }
-                    .onChange(of: isFocused) {
-                        if !isFocused { finishEditing() }
-                    }
-            } else {
-                Button {
-                    draft = kind.display(value)
-                    isEditing = true
-                } label: {
-                    Text(kind.display(value))
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .monospacedDigit()
-        .foregroundStyle(.secondary)
-        .frame(width: 70)
-        .accessibilityLabel(kind.label)
-        .help(kind.help)
-        .onDisappear { finishEditing() }
+    func makeCoordinator() -> Coordinator { Coordinator(parent: self) }
+
+    func makeNSView(context: Context) -> ClickFocusedTextField {
+        let field = ClickFocusedTextField()
+        field.isBordered = false
+        field.drawsBackground = false
+        field.alignment = .right
+        field.font = .monospacedDigitSystemFont(ofSize: NSFont.smallSystemFontSize, weight: .regular)
+        field.textColor = .secondaryLabelColor
+        field.delegate = context.coordinator
+        field.setAccessibilityLabel(kind.label)
+        field.toolTip = kind.help
+        return field
     }
 
-    private func finishEditing(save: Bool = true) {
-        guard isEditing else { return }
-        isEditing = false
-        isFocused = false
-        if save, let number = kind.parse(draft), number != value {
-            commit(number)
+    func updateNSView(_ field: ClickFocusedTextField, context: Context) {
+        context.coordinator.parent = self
+        if field.currentEditor() == nil { field.stringValue = kind.display(value) }
+    }
+
+    final class Coordinator: NSObject, NSTextFieldDelegate {
+        var parent: NumericSettingField
+        init(parent: NumericSettingField) { self.parent = parent }
+
+        func controlTextDidEndEditing(_ notification: Notification) {
+            guard let field = notification.object as? NSTextField else { return }
+            if let value = parent.kind.parse(field.stringValue) {
+                field.stringValue = parent.kind.display(value)
+                if value != parent.value { parent.commit(value) }
+            } else {
+                field.stringValue = parent.kind.display(parent.value)
+            }
         }
+
+        func control(_ control: NSControl, textView: NSTextView, doCommandBy command: Selector) -> Bool {
+            if command == #selector(NSResponder.cancelOperation(_:)) {
+                textView.string = parent.kind.display(parent.value)
+            } else if command != #selector(NSResponder.insertNewline(_:)) {
+                return false
+            }
+            control.window?.makeFirstResponder(nil)
+            return true
+        }
+    }
+}
+
+@MainActor private final class ClickFocusedTextField: NSTextField {
+    private var focusingFromClick = false
+    override var acceptsFirstResponder: Bool { focusingFromClick }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func mouseDown(with event: NSEvent) {
+        focusingFromClick = true
+        defer { focusingFromClick = false }
+        window?.makeFirstResponder(self)
+        selectText(nil)
     }
 }
