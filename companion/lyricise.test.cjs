@@ -16,6 +16,8 @@ function harness(modern = false) {
   let commandResponse, toggleResponse, snapshotResponse;
   const launches = [];
   let now = 0;
+  let nextTimeoutID = 0;
+  const timeouts = new Map();
   const Player = {
     data: { item: { uri: 'spotify:track:A', name: 'Track A', artists: [{ name: 'Artist' }] } },
     getProgress: () => 2000,
@@ -89,11 +91,25 @@ function harness(modern = false) {
       sent.push(JSON.parse(init.body));
       return snapshotResponse ? snapshotResponse() : { ok: true };
     },
-    setTimeout,
+    setTimeout: (callback, delay) => {
+      const id = ++nextTimeoutID;
+      timeouts.set(id, { callback, deadline: now + delay });
+      return id;
+    },
+    clearTimeout: (id) => timeouts.delete(id),
     setInterval: (callback, delay) => (timers[delay] = callback),
   });
   return {
-    advanceTime: (milliseconds) => (now += milliseconds),
+    advanceTime: (milliseconds) => {
+      now += milliseconds;
+      for (const [id, timer] of timeouts) {
+        if (timer.deadline <= now) {
+          timeouts.delete(id);
+          timer.callback();
+        }
+      }
+    },
+    pendingTimeoutCount: () => timeouts.size,
     setSnapshotResponse: (callback) => (snapshotResponse = callback),
     launches,
     setToggleResponse: (callback) => (toggleResponse = callback),
@@ -353,3 +369,48 @@ test('transient lyric failures back off, cap retries, and reset for a new track'
   await h.heartbeat();
   assert.equal(h.pending.length, requestsBeforeRetry + 1);
 });
+
+for (const modern of [false, true]) {
+  const provider = modern ? 'RequestBuilder' : 'CosmosAsync';
+  for (const lateOutcome of ['resolve', 'reject']) {
+    test(`${provider} timeout retries and ignores late ${lateOutcome}`, async () => {
+      const h = harness(modern);
+      await settle();
+      const stalledRequest = h.pending[0];
+      h.advanceTime(9999);
+      await settle();
+      await h.heartbeat();
+      assert.equal(h.sent.at(-1).status, 'loading');
+      h.advanceTime(1);
+      await settle();
+      assert.equal(h.sent.at(-1).status, 'error');
+      assert.equal(h.pendingTimeoutCount(), 0);
+
+      h.advanceTime(9999);
+      await h.heartbeat();
+      assert.equal(h.pending.length, 1);
+      h.advanceTime(1);
+      await h.heartbeat();
+      assert.equal(h.pending.length, 2);
+      h.pending[1].resolve({
+        lyrics: { syncType: 'UNSYNCED', lines: [{ words: 'Retried lyrics' }] },
+      });
+      await settle();
+      assert.equal(h.sent.at(-1).status, 'ready');
+      assert.equal(h.pendingTimeoutCount(), 0);
+
+      if (lateOutcome === 'resolve') {
+        stalledRequest.resolve({
+          lyrics: { syncType: 'UNSYNCED', lines: [{ words: 'Stale lyrics' }] },
+        });
+      } else {
+        stalledRequest.reject(new Error('Late provider failure'));
+      }
+      await settle();
+      await h.heartbeat();
+      assert.equal(h.sent.at(-1).status, 'ready');
+      assert.equal(h.sent.at(-1).lines[0].text, 'Retried lyrics');
+      assert.deepEqual(h.launches, []);
+    });
+  }
+}

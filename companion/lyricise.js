@@ -10,6 +10,7 @@
   const COMMAND_RETRY_MS = 1_000;
   const BRIDGE_TIMEOUT_MS = 2_000;
   const LAUNCH_TIMEOUT_MS = 4_000;
+  const LYRICS_TIMEOUT_MS = 10_000;
   const ERROR_RETRY_MS = 10_000;
   const RATE_LIMIT_RETRY_MS = 60_000;
   const MAX_RETRY_MS = 300_000;
@@ -127,6 +128,23 @@
     }
   }
   async function fetchLyrics(trackID) {
+    let timeout;
+    const deadline = new Promise((resolve, reject) => {
+      timeout = setTimeout(
+        () => reject(new Error('Spotify lyrics request timed out')),
+        LYRICS_TIMEOUT_MS,
+      );
+    });
+    try {
+      // Neither provider API exposes a shared cancellation contract. Racing leaves
+      // late results observed but unable to change lyrics or the retry state.
+      return await Promise.race([requestLyrics(trackID), deadline]);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async function requestLyrics(trackID) {
     // Spotify 1.3+ uses RequestBuilder; it owns authentication and refresh.
     if (Spicetify.Platform?.RequestBuilder) {
       const response = await Spicetify.Platform.RequestBuilder.build()
