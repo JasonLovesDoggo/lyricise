@@ -1,0 +1,226 @@
+[
+  {
+    "name": "Catppuccin Mocha",
+    "slug": "catppuccin-mocha",
+    "appearance": {
+      "background": "#1e1e2e",
+      "text": "#cdd6f4",
+      "accent": "#b4befe",
+      "muted_text": "#6c7086",
+      "background_opacity": 1.0,
+      "blur": 0,
+      "font": "SF Pro",
+      "font_size": 22,
+      "padding": 20,
+      "corner_radius": 16
+    }
+  },
+  {
+    "name": "Catppuccin Latte",
+    "slug": "catppuccin-latte",
+    "appearance": {
+      "background": "#eff1f5",
+      "text": "#4c4f69",
+      "accent": "#1e66f5",
+      "muted_text": "#6c6f85",
+      "background_opacity": 1.0,
+      "blur": 0,
+      "font": "SF Pro",
+      "font_size": 22,
+      "padding": 20,
+      "corner_radius": 16
+    }
+  },
+  {
+    "name": "Catppuccin Frappé",
+    "slug": "catppuccin-frappe",
+    "appearance": {
+      "background": "#303446",
+      "text": "#c6d0f5",
+      "accent": "#babbf1",
+      "muted_text": "#737994",
+      "background_opacity": 1.0,
+      "blur": 0,
+      "font": "SF Pro",
+      "font_size": 22,
+      "padding": 20,
+      "corner_radius": 16
+    }
+  },
+  {
+    "name": "Catppuccin Macchiato",
+    "slug": "catppuccin-macchiato",
+    "appearance": {
+      "background": "#24273a",
+      "text": "#cad3f5",
+      "accent": "#b7bdf8",
+      "muted_text": "#6e738d",
+      "background_opacity": 1.0,
+      "blur": 0,
+      "font": "SF Pro",
+      "font_size": 22,
+      "padding": 20,
+      "corner_radius": 16
+    }
+  },
+  {
+    "name": "Tokyo Night",
+    "slug": "tokyo-night",
+    "appearance": {
+      "background": "#1a1b26",
+      "text": "#c0caf5",
+      "accent": "#7aa2f7",
+      "muted_text": "#a9b1d6",
+      "background_opacity": 1.0,
+      "blur": 0,
+      "font": "SF Pro",
+      "font_size": 22,
+      "padding": 20,
+      "corner_radius": 16
+    }
+  },
+  {
+    "name": "One Dark",
+    "slug": "one-dark",
+    "appearance": {
+      "background": "#21252b",
+      "text": "#abb2bf",
+      "accent": "#61afef",
+      "muted_text": "#767676",
+      "background_opacity": 1.0,
+      "blur": 0,
+      "font": "SF Pro",
+      "font_size": 22,
+      "padding": 20,
+      "corner_radius": 16
+    }
+  },
+  {
+    "name": "GitHub Dark",
+    "slug": "github-dark",
+    "appearance": {
+      "background": "#0d1117",
+      "text": "#e6edf3",
+      "accent": "#58a6ff",
+      "muted_text": "#6e7681",
+      "background_opacity": 1.0,
+      "blur": 0,
+      "font": "SF Pro",
+      "font_size": 22,
+      "padding": 20,
+      "corner_radius": 16
+    }
+  },
+  {
+    "name": "Nightfox",
+    "slug": "nightfox",
+    "appearance": {
+      "background": "#192330",
+      "text": "#cdcecf",
+      "accent": "#86abdc",
+      "muted_text": "#719cd6",
+      "background_opacity": 1.0,
+      "blur": 0,
+      "font": "SF Pro",
+      "font_size": 22,
+      "padding": 20,
+      "corner_radius": 16
+    }
+  },
+  {
+    "name": "Dracula",
+    "slug": "dracula",
+    "appearance": {
+      "background": "#282a36",
+      "text": "#f8f8f2",
+      "accent": "#bd93f9",
+      "muted_text": "#6272a4",
+      "background_opacity": 1.0,
+      "blur": 0,
+      "font": "SF Pro",
+      "font_size": 22,
+      "padding": 20,
+      "corner_radius": 16
+    }
+  },
+  {
+    "name": "Snazzy",
+    "slug": "snazzy",
+    "appearance": {
+      "background": "#1e1f29",
+      "text": "#ebece6",
+      "accent": "#fc4cb4",
+      "muted_text": "#81aec6",
+      "background_opacity": 1.0,
+      "blur": 0,
+      "font": "SF Pro",
+      "font_size": 22,
+      "padding": 20,
+      "corner_radius": 16
+    }
+  },
+  {
+    "name": "Nord",
+    "slug": "nord",
+    "appearance": {
+      "background": "#2e3440",
+      "text": "#d8dee9",
+      "accent": "#88c0d0",
+      "muted_text": "#81a1c1",
+      "background_opacity": 1.0,
+      "blur": 0,
+      "font": "SF Pro",
+      "font_size": 22,
+      "padding": 20,
+      "corner_radius": 16
+    }
+  },
+  {
+    "name": "Gruvbox Dark",
+    "slug": "gruvbox-dark",
+    "appearance": {
+      "background": "#282828",
+      "text": "#ebdbb2",
+      "accent": "#fabd2f",
+      "muted_text": "#a89984",
+      "background_opacity": 1.0,
+      "blur": 0,
+      "font": "SF Pro",
+      "font_size": 22,
+      "padding": 20,
+      "corner_radius": 16
+    }
+  },
+  {
+    "name": "Rosé Pine",
+    "slug": "rose-pine",
+    "appearance": {
+      "background": "#191724",
+      "text": "#e0def4",
+      "accent": "#ebbcba",
+      "muted_text": "#6e6a86",
+      "background_opacity": 1.0,
+      "blur": 0,
+      "font": "SF Pro",
+      "font_size": 22,
+      "padding": 20,
+      "corner_radius": 16
+    }
+  },
+  {
+    "name": "Solarized Light",
+    "slug": "solarized-light",
+    "appearance": {
+      "background": "#fdf6e3",
+      "text": "#657b83",
+      "accent": "#268bd2",
+      "muted_text": "#839496",
+      "background_opacity": 1.0,
+      "blur": 0,
+      "font": "SF Pro",
+      "font_size": 22,
+      "padding": 20,
+      "corner_radius": 16
+    }
+  }
+]

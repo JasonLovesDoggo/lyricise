@@ -1,0 +1,11 @@
+[appearance]
+background = "#282828"
+text = "#ebdbb2"
+accent = "#fabd2f"
+muted_text = "#a89984"
+background_opacity = 1.0
+blur = 0
+font = "SF Pro"
+font_size = 22
+padding = 20
+corner_radius = 16
