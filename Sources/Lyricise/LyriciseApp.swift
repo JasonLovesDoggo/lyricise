@@ -46,7 +46,7 @@ import SwiftUI
             Button("Reload Config") { delegate.store.reload() }
             if let error = delegate.store.configError { Text(error) }
             Divider()
-            Text(delegate.store.connected ? "Connected to Spotify" : "Waiting for Spotify companion")
+            Text(delegate.store.playback.connected ? "Connected to Spotify" : "Waiting for Spotify companion")
             Divider()
             Button("Quit Lyricise", role: .destructive) { NSApplication.shared.terminate(nil) }
                 .keyboardShortcut("q")
@@ -177,14 +177,14 @@ struct LyricsView: View {
                     HStack(spacing: 12) {
                         if store.config.showTrackTitle {
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(store.title).font(.system(size: 12, weight: .semibold)).lineLimit(1)
-                                Text(store.artist).font(.system(size: 11)).foregroundStyle(
+                                Text(store.playback.title).font(.system(size: 12, weight: .semibold)).lineLimit(1)
+                                Text(store.playback.artist).font(.system(size: 11)).foregroundStyle(
                                     Color(hex: store.config.mutedText)
                                 ).lineLimit(1)
                             }
                         }
                         Spacer(minLength: 0)
-                        if store.config.showArtwork, let url = store.artworkURL {
+                        if store.config.showArtwork, let url = store.playback.artworkURL {
                             AsyncImage(url: url) { image in
                                 image.resizable().scaledToFill()
                             } placeholder: {
@@ -195,7 +195,7 @@ struct LyricsView: View {
                         }
                     }.padding(.horizontal, store.config.padding).padding(.top, 16).padding(.bottom, 10)
                 }
-                if store.lines.isEmpty || !store.connected {
+                if store.playback.lines.isEmpty || !store.playback.connected {
                     Text(store.message).font(.system(size: 14)).foregroundStyle(
                         Color(hex: store.config.mutedText)
                     ).frame(maxWidth: .infinity, maxHeight: .infinity).padding()
@@ -204,7 +204,7 @@ struct LyricsView: View {
                         ScrollViewReader { proxy in
                             ScrollView(.vertical) {
                                 VStack(alignment: .leading, spacing: 18) {
-                                    ForEach(store.lines) { line in
+                                    ForEach(store.playback.lines) { line in
                                         Text(line.text.isEmpty ? "♪" : line.text)
                                             .underline(line.time != nil && hoveredLine == line.id)
                                             .font(
@@ -216,10 +216,10 @@ struct LyricsView: View {
                                             )
                                             .foregroundStyle(
                                                 Color(
-                                                    hex: line.id == store.active
+                                                    hex: line.id == store.playback.active
                                                         ? store.config.accent : store.config.text
                                                 ).opacity(
-                                                    line.id == store.active || line.time == nil ? 1 : 0.32)
+                                                    line.id == store.playback.active || line.time == nil ? 1 : 0.32)
                                             )
                                             .fixedSize(horizontal: false, vertical: true)
                                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -245,44 +245,44 @@ struct LyricsView: View {
                                     .padding(
                                         .vertical,
                                         !suspended && store.config.followPlayback
-                                            && store.lines.contains(where: { $0.time != nil })
+                                            && store.playback.lines.contains(where: { $0.time != nil })
                                             ? geometry.size.height / 2 : 12)
                             }
                             .scrollIndicators(.hidden)
                             .onScrollPhaseChange { _, phase in
                                 if phase == .interacting { suspended = true }
                             }
-                            .onChange(of: store.recenter) { _, _ in
-                                if store.config.followPlayback, !suspended, let id = store.active {
+                            .onChange(of: store.playback.recenter) { _, _ in
+                                if store.config.followPlayback, !suspended, let id = store.playback.active {
                                     proxy.scrollTo(id, anchor: .center)
                                 }
                             }
                             .onChange(of: store.config) { _, _ in
-                                if store.config.followPlayback, !suspended, let id = store.active {
+                                if store.config.followPlayback, !suspended, let id = store.playback.active {
                                     proxy.scrollTo(id, anchor: .center)
                                 }
                             }
                             .overlay(alignment: .bottom) {
-                                if suspended && store.config.followPlayback && store.active != nil {
+                                if suspended && store.config.followPlayback && store.playback.active != nil {
                                     Button("Back to current line") {
                                         suspended = false
-                                        if let id = store.active { proxy.scrollTo(id, anchor: .center) }
+                                        if let id = store.playback.active { proxy.scrollTo(id, anchor: .center) }
                                     }.buttonStyle(.bordered).controlSize(.small).padding(.bottom, 10)
                                 }
                             }
-                            .onChange(of: store.active) { _, id in
+                            .onChange(of: store.playback.active) { _, id in
                                 guard store.config.followPlayback, !suspended, let id else { return }
                                 withAnimation(
-                                    reduceMotion || !store.animateLine ? nil : .easeInOut(duration: 0.3)
+                                    reduceMotion || !store.playback.animateLine ? nil : .easeInOut(duration: 0.3)
                                 ) { proxy.scrollTo(id, anchor: .center) }
                             }
                             .onChange(of: geometry.size) { _, _ in
-                                if store.config.followPlayback, !suspended, let id = store.active {
+                                if store.config.followPlayback, !suspended, let id = store.playback.active {
                                     proxy.scrollTo(id, anchor: .center)
                                 }
                             }
                             .onAppear {
-                                if store.config.followPlayback, let id = store.active {
+                                if store.config.followPlayback, let id = store.playback.active {
                                     proxy.scrollTo(id, anchor: .center)
                                 }
                             }
@@ -348,7 +348,7 @@ struct LyricsView: View {
                 .padding(3)
         }
         .contextMenu { commonSettings }
-        .onChange(of: store.trackID) { _, _ in
+        .onChange(of: store.playback.trackID) { _, _ in
             suspended = false
             hoveredLine = nil
         }.contentShape(Rectangle()).gesture(WindowDragGesture()).allowsWindowActivationEvents()

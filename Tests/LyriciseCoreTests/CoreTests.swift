@@ -61,40 +61,6 @@ struct ConfigurationTests {
     }
 }
 
-@Suite("Lyric timing in milliseconds")
-struct TimingTests {
-    let lines = [
-        LyricLine(id: 10, time: 1000, text: "first"),
-        LyricLine(id: 20, time: 2500, text: "second"),
-        LyricLine(id: 21, time: 2500, text: "simultaneous"),
-        LyricLine(id: 30, time: 5000, text: "last"),
-    ]
-
-    @Test func boundariesAndDuplicateTimes() {
-        #expect(LyricTiming.activeLine(in: lines, at: 999) == nil)
-        #expect(LyricTiming.activeLine(in: lines, at: 1000) == 10)
-        #expect(LyricTiming.activeLine(in: lines, at: 2499) == 10)
-        #expect(LyricTiming.activeLine(in: lines, at: 2500) == 21)
-        #expect(LyricTiming.activeLine(in: lines, at: 99999) == 30)
-    }
-
-    @Test func backwardAndForwardSeeksDoNotKeepOldIndex() {
-        #expect(LyricTiming.activeLine(in: lines, at: 6000) == 30)
-        #expect(LyricTiming.activeLine(in: lines, at: 1200) == 10)
-        #expect(LyricTiming.activeLine(in: lines, at: 0) == nil)
-        #expect(LyricTiming.activeLine(in: lines, at: 3000) == 21)
-    }
-
-    @Test func emptyUnsyncedAndInvalidPositions() {
-        #expect(LyricTiming.activeLine(in: [], at: 1000) == nil)
-        #expect(
-            LyricTiming.activeLine(in: [LyricLine(id: 0, time: nil, text: "plain")], at: 1000) == nil)
-        for value in [Double.nan, Double.infinity, -1] {
-            #expect(LyricTiming.activeLine(in: lines, at: value) == nil)
-        }
-    }
-}
-
 @Suite("Companion payload validation")
 struct SnapshotTests {
     func snapshot() -> Snapshot {

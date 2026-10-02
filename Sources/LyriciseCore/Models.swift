@@ -86,10 +86,3 @@ public struct Snapshot: Codable, Sendable {
     }
 }
 public enum ModelError: Error { case invalidSnapshot }
-public enum LyricTiming {
-    public static func activeLine(in lines: [LyricLine], at position: Double) -> Int? {
-        guard position.isFinite, position >= 0 else { return nil }
-        // Last matching timestamp wins, including duplicate timestamps.
-        return lines.last(where: { $0.time.map { $0 <= position } ?? false })?.id
-    }
-}
