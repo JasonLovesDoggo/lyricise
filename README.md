@@ -13,13 +13,13 @@ Requires **macOS 27 or newer**, an **Apple silicon Mac**, [Homebrew](https://bre
   set -e
   installer=$(mktemp)
   trap 'rm -f "$installer"' EXIT
-  curl --proto '=https' --proto-redir '=https' -fsSL --connect-timeout 15 --max-time 60 \
+  curl -q --proto '=https' --proto-redir '=https' -fsSL --connect-timeout 15 --max-time 60 \
     https://lyricise.jsn.cam/install.sh -o "$installer"
   bash "$installer"
 )
 ```
 
-Installs the app in `~/Applications` and connects Spotify. No Xcode needed. The installer asks before making changes; Spotify restarts during setup. Your preferences and existing Spicetify extensions are preserved. Downloads are checked before installation; errors stop the installer. Previous app versions are saved in `~/.config/lyricise/backups`.
+Installs the app in `~/Applications` and connects Spotify. No Xcode needed. The installer asks before making changes; Spotify restarts during setup. Your preferences and existing Spicetify extensions are preserved. The installer pins the app’s SHA-256 checksum and stops on errors. Previous app versions are saved in `~/.config/lyricise/backups`.
 
 [Read the installer](scripts/bootstrap.sh). To check requirements without installing, change the last command to `bash "$installer" --check`.
 
