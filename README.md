@@ -6,16 +6,13 @@ https://github.com/user-attachments/assets/604661a1-94d8-48f2-93fd-0d8f0ebc78e2
 
 ## Install
 
-Requires **macOS 27**, **Xcode 27**, and the **Spotify desktop app**. Open Xcode once to finish its setup.
-
-From this repo:
+Requires **macOS 27 or newer**, an **Apple silicon Mac**, [Homebrew](https://brew.sh), and the **Spotify desktop app**.
 
 ```sh
-brew install just spicetify-cli
-just install
+curl -fsSL https://lyricise.jsn.cam/install.sh | bash
 ```
 
-Installs Lyricise in `~/Applications` and sets up its Spotify companion. Spotify restarts once; existing Spicetify settings and extensions are preserved.
+Installs the app in `~/Applications` and connects Spotify. No Xcode needed. The installer asks before making changes; Spotify restarts once. Your preferences and existing Spicetify extensions are preserved.
 
 ## Use
 
@@ -42,14 +39,17 @@ Changes reload automatically. See the [default config](Sources/LyriciseCore/Reso
 If lyrics stop working after a Spotify update, reapply the companion:
 
 ```sh
-just companion
+curl -fsSL https://lyricise.jsn.cam/install.sh | bash
 ```
 
 Some songs have no lyrics or no timing.
 
 ## Development
 
+Requires Xcode 27 and `brew install just spicetify-cli`.
+
 ```sh
+just install # Build and install from source
 just build  # Build the app
 just test   # Run tests
 ```
