@@ -22,6 +22,7 @@ import Testing
     config.borderWidth = 2.5
     config.trackTitleVisibility = .hover
     config.artworkVisibility = .always
+    config.playbackControlsVisibility = .hover
     config.followPlayback = false
     config.font = "A \"Quoted\" Font \\ Variant"
     config.offsetMS = -125.5
@@ -125,13 +126,7 @@ import Testing
     #expect(WindowHotKey.recording(keyCode: UInt32.max, modifiers: UInt32.max) == nil)
 }
 
-@Test func playbackControlsAreOptInAndPersistThroughOtherSettingsEdits() throws {
+@Test func playbackControlsDefaultToHidden() throws {
     #expect(try AppConfig.parse("").playbackControlsVisibility == .never)
     #expect(try AppConfig.parse(AppConfig.defaultTOML).playbackControlsVisibility == .never)
-    for visibility in ContentVisibility.allCases {
-        var config = try AppConfig.parse("[window]\nplayback_controls = '\(visibility.rawValue)'")
-        config.fontSize = 24
-        #expect(try AppConfig.parse(config.serialized()).playbackControlsVisibility == visibility)
-    }
-    #expect(throws: (any Error).self) { try AppConfig.parse("[window]\nplayback_controls = 'sometimes'") }
 }

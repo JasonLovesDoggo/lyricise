@@ -237,11 +237,13 @@ test('authenticated commands seek the matching track once and refresh playback',
   assert.equal(h.seeks.length, 1);
   assert.ok(h.sent.length >= 2);
 });
-test('commands reject wrong tracks and invalid seek positions', async () => {
+test('commands reject wrong tracks, unknown actions, and invalid seek positions', async () => {
   const h = harness();
   await settle();
   const invalid = [
     { id: 'wrong-track', trackID: 'spotify:track:B', position: 100 },
+    { id: 'wrong-playback-track', trackID: 'spotify:track:B', action: 'next' },
+    { id: 'unknown', trackID: 'spotify:track:A', action: 'toggle', position: 1000 },
     ...[-1, NaN, Infinity, 100001, '100'].map((position, i) => ({
       id: String(i),
       trackID: 'spotify:track:A',
@@ -253,21 +255,25 @@ test('commands reject wrong tracks and invalid seek positions', async () => {
     await h.poll();
   }
   assert.deepEqual(h.seeks, []);
+  assert.deepEqual(h.playbackActions, []);
 });
-test('a song change while a command is in flight cannot seek the new song', async () => {
-  const h = harness();
-  await settle();
-  let resolve;
-  h.setCommandResponse(() => new Promise((r) => (resolve = r)));
-  const poll = h.poll();
-  h.Player.data.item.uri = 'spotify:track:B';
-  resolve({
-    ok: true,
-    json: async () => ({ id: 'late', trackID: 'spotify:track:A', position: 100 }),
+for (const action of [undefined, 'next']) {
+  test(`a song change rejects an in-flight ${action ?? 'seek'} command`, async () => {
+    const h = harness();
+    await settle();
+    let resolve;
+    h.setCommandResponse(() => new Promise((done) => { resolve = done; }));
+    const poll = h.poll();
+    h.Player.data.item.uri = 'spotify:track:B';
+    resolve({
+      ok: true,
+      json: async () => ({ id: 'late', trackID: 'spotify:track:A', position: 100, action }),
+    });
+    await poll;
+    assert.deepEqual(h.seeks, []);
+    assert.deepEqual(h.playbackActions, []);
   });
-  await poll;
-  assert.deepEqual(h.seeks, []);
-});
+}
 
 test('public album artwork normalizes Spotify image URIs and drops query strings', async () => {
   const h = harness();
@@ -431,25 +437,5 @@ test('playback commands execute once for the current track without seek position
     await h.poll();
   }
   assert.deepEqual(h.playbackActions, ['play', 'pause', 'previous', 'next']);
-  assert.deepEqual(h.seeks, []);
-});
-
-test('playback commands reject unknown actions and stale tracks', async () => {
-  const h = harness();
-  await settle();
-  for (const command of [
-    { id: 'wrong-track', trackID: 'spotify:track:B', action: 'next' },
-    { id: 'unknown', trackID: 'spotify:track:A', action: 'toggle', position: 1000 },
-  ]) {
-    h.commands.push(command);
-    await h.poll();
-  }
-  let resolve;
-  h.setCommandResponse(() => new Promise((done) => { resolve = done; }));
-  const polling = h.poll();
-  h.Player.data.item.uri = 'spotify:track:B';
-  resolve({ ok: true, json: async () => ({ id: 'late', trackID: 'spotify:track:A', action: 'next' }) });
-  await polling;
-  assert.deepEqual(h.playbackActions, []);
   assert.deepEqual(h.seeks, []);
 });
