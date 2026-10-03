@@ -241,7 +241,6 @@
       playing: Boolean(Spicetify.Player.isPlaying()),
       status: uri ? status : 'idle',
       lines,
-      provider: 'Spotify',
       sequence: ++sequence,
       session,
     };

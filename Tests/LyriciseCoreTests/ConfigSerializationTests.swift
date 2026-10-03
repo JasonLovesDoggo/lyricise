@@ -59,7 +59,6 @@ import Testing
 
 @Test func blurIntensityDefaultsCompatibilityAndBounds() throws {
     #expect(AppConfig().blurRadius == 0)
-    #expect(AppConfig().blur == false)
     #expect(try AppConfig.parse("").blurRadius == 0)
     #expect(try AppConfig.parse("[appearance]\nblur = true").blurRadius == 20)
     #expect(try AppConfig.parse("[appearance]\nblur = false").blurRadius == 0)

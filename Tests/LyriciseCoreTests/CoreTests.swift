@@ -20,7 +20,7 @@ struct ConfigurationTests {
             offset_ms = -200
             """)
         #expect(config.accent == "#ABCDef")
-        #expect(!config.blur)
+        #expect(config.blurRadius == 0)
         #expect(config.offsetMS == -200)
         #expect(config.width == 420)
         #expect(config.fontSize == 20)
@@ -70,7 +70,7 @@ struct SnapshotTests {
             lines: [
                 LyricLine(id: 0, time: 1000, text: "test"), LyricLine(id: 1, time: 2000, text: "next"),
             ],
-            provider: "Spotify", sequence: 1, session: "test-session")
+            sequence: 1, session: "test-session")
     }
 
     @Test func JSONRoundTripMatchesWireTypes() throws {

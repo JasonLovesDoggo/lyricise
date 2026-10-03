@@ -43,8 +43,8 @@ import SwiftUI
             }
             Button("Open Spotify") { NSWorkspace.shared.open(URL(string: "spotify:")!) }
             Button("Open Config…") { delegate.store.openConfig() }
-            Button("Reload Config") { delegate.store.reload() }
-            if let error = delegate.store.configError { Text(error) }
+            Button("Reload Config") { delegate.store.settings.reload() }
+            if let error = delegate.store.settings.error { Text(error) }
             Divider()
             Text(delegate.store.playback.connected ? "Connected to Spotify" : "Waiting for Spotify companion")
             Divider()
@@ -69,7 +69,7 @@ import SwiftUI
     init(store: Store) {
         self.store = store
         panel = FloatingPanel(
-            contentRect: NSRect(x: 180, y: 180, width: store.config.width, height: store.config.height),
+            contentRect: NSRect(x: 180, y: 180, width: store.settings.value.width, height: store.settings.value.height),
             styleMask: [.borderless, .resizable, .nonactivatingPanel], backing: .buffered, defer: false)
         super.init()
         Self.current = self
@@ -87,7 +87,7 @@ import SwiftUI
         panel.contentView = NSHostingView(rootView: LyricsView(store: store))
         panel.acceptsMouseMovedEvents = true
         panel.delegate = self
-        if store.config.rememberPosition {
+        if store.settings.value.rememberPosition {
             panel.setFrameAutosaveName("LyriciseWindow")
             panel.setFrameUsingName("LyriciseWindow")
         }
@@ -120,18 +120,16 @@ import SwiftUI
         panel.setFrame(frame, display: true)
     }
     @objc func updateBlur() {
-        let radius =
-            NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency ? 0 : store.config.blurRadius
-        _ = WindowBlur.apply(radius: radius, window: panel)
+        WindowBlur.apply(radius: store.settings.value.blurRadius, window: panel)
     }
     func observe() {
         withObservationTracking {
-            panel.level = store.config.alwaysOnTop ? .floating : .normal
+            panel.level = store.settings.value.alwaysOnTop ? .floating : .normal
             panel.collectionBehavior =
-                store.config.allSpaces
+                store.settings.value.allSpaces
                 ? [.canJoinAllSpaces, .fullScreenAuxiliary] : [.moveToActiveSpace, .fullScreenAuxiliary]
             updateBlur()
-            _ = store.config
+            _ = store.settings.value
         } onChange: { [weak self] in
             Task { @MainActor in self?.observe() }
         }
@@ -167,39 +165,39 @@ struct LyricsView: View {
     private var hovering: Bool { store.hovering }
     @State private var resizeStart: NSRect?
     private func setting<Value>(_ key: WritableKeyPath<AppConfig, Value>) -> Binding<Value> {
-        Binding(get: { store.config[keyPath: key] }, set: { store.set(key, to: $0) })
+        Binding(get: { store.settings.value[keyPath: key] }, set: { store.settings.set(key, to: $0) })
     }
     var body: some View {
         ZStack {
-            Color(hex: store.config.background).opacity(reduceTransparency ? 1 : store.config.opacity)
+            Color(hex: store.settings.value.background).opacity(reduceTransparency ? 1 : store.settings.value.opacity)
             VStack(alignment: .leading, spacing: 0) {
-                if store.config.trackTitleVisibility != .never || store.config.artworkVisibility != .never {
+                if store.settings.value.trackTitleVisibility != .never || store.settings.value.artworkVisibility != .never {
                     HStack(spacing: 12) {
-                        if store.config.trackTitleVisibility != .never {
+                        if store.settings.value.trackTitleVisibility != .never {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(store.playback.title).font(.system(size: 12, weight: .semibold)).lineLimit(1)
                                 Text(store.playback.artist).font(.system(size: 11)).foregroundStyle(
-                                    Color(hex: store.config.mutedText)
+                                    Color(hex: store.settings.value.mutedText)
                                 ).lineLimit(1)
                             }
-                            .opacity(store.config.trackTitleVisibility.isVisible(hovering: hovering) ? 1 : 0)
+                            .opacity(store.settings.value.trackTitleVisibility.isVisible(hovering: hovering) ? 1 : 0)
                         }
                         Spacer(minLength: 0)
-                        if store.config.artworkVisibility != .never, let url = store.playback.artworkURL {
+                        if store.settings.value.artworkVisibility != .never, let url = store.playback.artworkURL {
                             AsyncImage(url: url) { image in
                                 image.resizable().scaledToFill()
                             } placeholder: {
-                                Color(hex: store.config.mutedText).opacity(0.15)
+                                Color(hex: store.settings.value.mutedText).opacity(0.15)
                             }
                             .frame(width: 40, height: 40).clipShape(RoundedRectangle(cornerRadius: 6))
                             .accessibilityLabel("Album cover")
-                            .opacity(store.config.artworkVisibility.isVisible(hovering: hovering) ? 1 : 0)
+                            .opacity(store.settings.value.artworkVisibility.isVisible(hovering: hovering) ? 1 : 0)
                         }
-                    }.padding(.horizontal, store.config.padding).padding(.top, 16).padding(.bottom, 10)
+                    }.padding(.horizontal, store.settings.value.padding).padding(.top, 16).padding(.bottom, 10)
                 }
                 if store.playback.lines.isEmpty || !store.playback.connected {
                     Text(store.message).font(.system(size: 14)).foregroundStyle(
-                        Color(hex: store.config.mutedText)
+                        Color(hex: store.settings.value.mutedText)
                     ).frame(maxWidth: .infinity, maxHeight: .infinity).padding()
                 } else {
                     GeometryReader { geometry in
@@ -210,16 +208,16 @@ struct LyricsView: View {
                                         Text(line.text.isEmpty ? "♪" : line.text)
                                             .underline(line.time != nil && hoveredLine == line.id)
                                             .font(
-                                                store.config.font == "SF Pro"
-                                                    ? .system(size: store.config.fontSize, weight: .semibold)
-                                                    : .custom(store.config.font, size: store.config.fontSize)
+                                                store.settings.value.font == "SF Pro"
+                                                    ? .system(size: store.settings.value.fontSize, weight: .semibold)
+                                                    : .custom(store.settings.value.font, size: store.settings.value.fontSize)
                                                         .weight(
                                                             .semibold)
                                             )
                                             .foregroundStyle(
                                                 Color(
                                                     hex: line.id == store.playback.active
-                                                        ? store.config.accent : store.config.text
+                                                        ? store.settings.value.accent : store.settings.value.text
                                                 ).opacity(
                                                     line.id == store.playback.active || line.time == nil ? 1 : 0.32)
                                             )
@@ -243,10 +241,10 @@ struct LyricsView: View {
                                             .help(line.time == nil ? "Untimed lyric" : "Play from this line")
                                             .id(line.id)
                                     }
-                                }.padding(.horizontal, store.config.padding)
+                                }.padding(.horizontal, store.settings.value.padding)
                                     .padding(
                                         .vertical,
-                                        !suspended && store.config.followPlayback
+                                        !suspended && store.settings.value.followPlayback
                                             && store.playback.lines.contains(where: { $0.time != nil })
                                             ? geometry.size.height / 2 : 12)
                             }
@@ -255,17 +253,17 @@ struct LyricsView: View {
                                 if phase == .interacting { suspended = true }
                             }
                             .onChange(of: store.playback.recenter) { _, _ in
-                                if store.config.followPlayback, !suspended, let id = store.playback.active {
+                                if store.settings.value.followPlayback, !suspended, let id = store.playback.active {
                                     proxy.scrollTo(id, anchor: .center)
                                 }
                             }
-                            .onChange(of: store.config) { _, _ in
-                                if store.config.followPlayback, !suspended, let id = store.playback.active {
+                            .onChange(of: store.settings.value) { _, _ in
+                                if store.settings.value.followPlayback, !suspended, let id = store.playback.active {
                                     proxy.scrollTo(id, anchor: .center)
                                 }
                             }
                             .overlay(alignment: .bottom) {
-                                if suspended && store.config.followPlayback && store.playback.active != nil {
+                                if suspended && store.settings.value.followPlayback && store.playback.active != nil {
                                     Button("Back to current line") {
                                         suspended = false
                                         if let id = store.playback.active { proxy.scrollTo(id, anchor: .center) }
@@ -273,18 +271,18 @@ struct LyricsView: View {
                                 }
                             }
                             .onChange(of: store.playback.active) { _, id in
-                                guard store.config.followPlayback, !suspended, let id else { return }
+                                guard store.settings.value.followPlayback, !suspended, let id else { return }
                                 withAnimation(
                                     reduceMotion || !store.playback.animateLine ? nil : .easeInOut(duration: 0.3)
                                 ) { proxy.scrollTo(id, anchor: .center) }
                             }
                             .onChange(of: geometry.size) { _, _ in
-                                if store.config.followPlayback, !suspended, let id = store.playback.active {
+                                if store.settings.value.followPlayback, !suspended, let id = store.playback.active {
                                     proxy.scrollTo(id, anchor: .center)
                                 }
                             }
                             .onAppear {
-                                if store.config.followPlayback, let id = store.playback.active {
+                                if store.settings.value.followPlayback, let id = store.playback.active {
                                     proxy.scrollTo(id, anchor: .center)
                                 }
                             }
@@ -326,14 +324,14 @@ struct LyricsView: View {
                         QuickSettingsView(store: store)
                     }
             }.buttonStyle(.plain).padding(5)
-                .background(Color(hex: store.config.background).opacity(0.95), in: Capsule())
+                .background(Color(hex: store.settings.value.background).opacity(0.95), in: Capsule())
                 .padding(5)
                 .opacity(hovering ? 1 : 0).allowsHitTesting(hovering)
         }
         .overlay(alignment: .bottomTrailing) {
             Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 9))
                 .accessibilityLabel("Resize window")
-                .foregroundStyle(Color(hex: store.config.mutedText)).opacity(hovering ? 0.8 : 0.25)
+                .foregroundStyle(Color(hex: store.settings.value.mutedText)).opacity(hovering ? 0.8 : 0.25)
                 .frame(width: 22, height: 22).contentShape(Rectangle())
                 .gesture(
                     DragGesture(minimumDistance: 0).onChanged { value in
@@ -354,11 +352,11 @@ struct LyricsView: View {
             suspended = false
             hoveredLine = nil
         }.contentShape(Rectangle()).gesture(WindowDragGesture()).allowsWindowActivationEvents()
-        .ignoresSafeArea().foregroundStyle(Color(hex: store.config.text)).clipShape(
-            RoundedRectangle(cornerRadius: store.config.cornerRadius))
+        .ignoresSafeArea().foregroundStyle(Color(hex: store.settings.value.text)).clipShape(
+            RoundedRectangle(cornerRadius: store.settings.value.cornerRadius))
         .overlay {
-            RoundedRectangle(cornerRadius: store.config.cornerRadius)
-                .strokeBorder(Color(hex: store.config.borderColor), lineWidth: store.config.borderWidth)
+            RoundedRectangle(cornerRadius: store.settings.value.cornerRadius)
+                .strokeBorder(Color(hex: store.settings.value.borderColor), lineWidth: store.settings.value.borderWidth)
                 .allowsHitTesting(false)
         }
     }
@@ -370,15 +368,15 @@ struct LyricsView: View {
         Divider()
         Picker(
             "Blur Intensity",
-            selection: Binding(get: { store.config.blurRadius }, set: { store.set(\.blurRadius, to: $0) })
+            selection: Binding(get: { store.settings.value.blurRadius }, set: { store.settings.set(\.blurRadius, to: $0) })
         ) {
             Text("Off").tag(0)
             Text("Light · 10").tag(10)
             Text("Medium · 20").tag(20)
             Text("Strong · 40").tag(40)
             Text("Heavy · 60").tag(60)
-            if ![0, 10, 20, 40, 60].contains(store.config.blurRadius) {
-                Text("Custom · \(store.config.blurRadius)").tag(store.config.blurRadius)
+            if ![0, 10, 20, 40, 60].contains(store.settings.value.blurRadius) {
+                Text("Custom · \(store.settings.value.blurRadius)").tag(store.settings.value.blurRadius)
             }
         }
         VisibilityPicker(title: "Song details", selection: setting(\.trackTitleVisibility))

@@ -21,6 +21,7 @@ struct BridgeTests {
         .authorization: "Bearer test-token",
         .contentType: "application/json",
     ]
+    // Older companions include provider; decoding must continue to accept it.
     private let snapshotJSON =
         #"{"trackID":"spotify:track:abc","title":"Title","artist":"Artist","position":1200,"duration":200000,"playing":true,"status":"ready","lines":[{"id":0,"time":1000,"text":"Test line"}],"provider":"Spotify","sequence":1,"session":"test-session"}"#
 

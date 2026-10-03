@@ -4,18 +4,15 @@ import Observation
 
 @MainActor @Observable final class Store {
     let settings: Settings
-    var config: AppConfig { settings.value }
     var hovering = false
     var quickSettingsPresented = false
     let playback = PlaybackState()
-    var configError: String? { settings.error }
     var connectionError: String?
     var message: String { connectionError ?? playback.message }
     @ObservationIgnored var bridge: Bridge?
     @ObservationIgnored var timer: Task<Void, Never>?
     let directory = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(
         ".config/lyricise")
-    var configURL: URL { settings.url }
     init() {
         settings = Settings(url: directory.appendingPathComponent("config.toml"))
         do {
@@ -42,20 +39,16 @@ import Observation
                 try? await Task.sleep(for: .milliseconds(100))
                 guard let self else { return }
                 PanelController.current?.refreshHover()
-                self.playback.tick(at: .now, offsetMS: self.config.offsetMS)
+                self.playback.tick(at: .now, offsetMS: self.settings.value.offsetMS)
             }
         }
     }
-    func reload() { settings.reload() }
     func accept(_ value: Snapshot) {
-        if playback.accept(value, at: .now, offsetMS: config.offsetMS) { connectionError = nil }
+        if playback.accept(value, at: .now, offsetMS: settings.value.offsetMS) { connectionError = nil }
     }
     func seek(to line: LyricLine) {
         guard let position = playback.seekPosition(for: line, at: .now) else { return }
         bridge?.seek(trackID: playback.trackID, position: position)
     }
-    func set<Value>(_ key: WritableKeyPath<AppConfig, Value>, to value: Value) {
-        settings.set(key, to: value)
-    }
-    func openConfig() { NSWorkspace.shared.open(configURL) }
+    func openConfig() { NSWorkspace.shared.open(settings.url) }
 }

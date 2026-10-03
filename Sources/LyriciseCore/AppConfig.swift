@@ -8,10 +8,6 @@ public struct AppConfig: Sendable, Equatable {
     public var opacity = 0.75, fontSize = 20.0, padding = 16.0, cornerRadius = 12.0
     public var borderColor = "#b4befe", borderWidth = 0.0
     public var blurRadius = 0
-    public var blur: Bool {
-        get { blurRadius > 0 }
-        set { blurRadius = newValue ? (blurRadius > 0 ? blurRadius : 20) : 0 }
-    }
     public var trackTitleVisibility = ContentVisibility.always
     public var artworkVisibility = ContentVisibility.never
     public var followPlayback = true
