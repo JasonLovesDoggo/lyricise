@@ -7,7 +7,7 @@ import SwiftUI
     private static let fontNames =
         ["SF Pro"] + NSFontManager.shared.availableFontFamilies.filter { $0 != "SF Pro" }.sorted()
     private func setting<Value>(_ key: WritableKeyPath<AppConfig, Value>) -> Binding<Value> {
-        Binding(get: { store.config[keyPath: key] }, set: { store.set(key, to: $0) })
+        Binding(get: { store.settings.value[keyPath: key] }, set: { store.settings.set(key, to: $0) })
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -25,25 +25,25 @@ import SwiftUI
                 ForEach(Self.fontNames, id: \.self) { name in
                     Text(name == "SF Pro" ? "System · SF Pro" : name).tag(name)
                 }
-                if !Self.fontNames.contains(store.config.font) {
-                    Text(store.config.font).tag(store.config.font)
+                if !Self.fontNames.contains(store.settings.value.font) {
+                    Text(store.settings.value.font).tag(store.settings.value.font)
                 }
             }
             VStack(spacing: 6) {
                 HStack {
                     Text("Font size")
                     Spacer()
-                    NumericSettingField(kind: .fontSize, value: store.config.fontSize) { size in
-                        store.set(\.fontSize, to: size)
+                    NumericSettingField(kind: .fontSize, value: store.settings.value.fontSize) { size in
+                        store.settings.set(\.fontSize, to: size)
                     }.frame(width: 70, height: 18)
                 }
                 Slider(
                     value: Binding(
-                        get: { store.config.fontSize },
+                        get: { store.settings.value.fontSize },
                         set: { store.settings.preview(\.fontSize, to: $0.rounded()) }),
                     in: 10...72
                 ) { editing in
-                    if !editing { store.set(\.fontSize, to: store.config.fontSize) }
+                    if !editing { store.settings.set(\.fontSize, to: store.settings.value.fontSize) }
                 }.accessibilityLabel("Font size")
             }
             Divider()
@@ -51,30 +51,30 @@ import SwiftUI
                 HStack {
                     Text("Blur intensity")
                     Spacer()
-                    NumericSettingField(kind: .blur, value: Double(store.config.blurRadius)) { value in
-                        store.set(\.blurRadius, to: Int(value))
+                    NumericSettingField(kind: .blur, value: Double(store.settings.value.blurRadius)) { value in
+                        store.settings.set(\.blurRadius, to: Int(value))
                     }.frame(width: 70, height: 18)
                 }
                 Slider(
                     value: Binding(
-                        get: { Double(store.config.blurRadius) },
+                        get: { Double(store.settings.value.blurRadius) },
                         set: { store.settings.preview(\.blurRadius, to: Int($0.rounded())) }), in: 0...100
                 ) { editing in
-                    if !editing { store.set(\.blurRadius, to: store.config.blurRadius) }
+                    if !editing { store.settings.set(\.blurRadius, to: store.settings.value.blurRadius) }
                 }.accessibilityLabel("Blur intensity")
             }
             HStack {
                 ColorPicker("Border", selection: Binding(
-                    get: { Color(hex: store.config.borderColor) },
+                    get: { Color(hex: store.settings.value.borderColor) },
                     set: { color in
                         guard let rgb = NSColor(color).usingColorSpace(.sRGB) else { return }
                         let hex = String(format: "#%02x%02x%02x", Int((rgb.redComponent * 255).rounded()),
                                          Int((rgb.greenComponent * 255).rounded()),
                                          Int((rgb.blueComponent * 255).rounded()))
-                        store.set(\.borderColor, to: hex)
+                        store.settings.set(\.borderColor, to: hex)
                     }), supportsOpacity: false)
-                NumericSettingField(kind: .borderWidth, value: store.config.borderWidth) { width in
-                    store.set(\.borderWidth, to: width)
+                NumericSettingField(kind: .borderWidth, value: store.settings.value.borderWidth) { width in
+                    store.settings.set(\.borderWidth, to: width)
                 }.frame(width: 50, height: 18)
                 Stepper("Border width", value: setting(\.borderWidth), in: 0...12, step: 0.5)
                     .labelsHidden()
@@ -92,7 +92,7 @@ import SwiftUI
                     .pickerStyle(.segmented).labelsHidden()
             }
             Toggle("Follow current lyric", isOn: setting(\.followPlayback))
-            if let error = store.configError {
+            if let error = store.settings.error {
                 Text(error).font(.caption).foregroundStyle(.red).fixedSize(
                     horizontal: false, vertical: true)
             }

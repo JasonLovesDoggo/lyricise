@@ -19,7 +19,6 @@ public struct Snapshot: Codable, Sendable {
     public var playing: Bool
     public var status: String
     public var lines: [LyricLine]?
-    public var provider: String?
     public var artworkURL: String?
     public var sequence: Double
     public var session: String
@@ -27,7 +26,7 @@ public struct Snapshot: Codable, Sendable {
     public init(
         trackID: String, title: String, artist: String, position: Double,
         duration: Double, playing: Bool, status: String, lines: [LyricLine]? = nil,
-        provider: String? = nil, sequence: Double, session: String, artworkURL: String? = nil
+        sequence: Double, session: String, artworkURL: String? = nil
     ) {
         self.trackID = trackID
         self.title = title
@@ -37,7 +36,6 @@ public struct Snapshot: Codable, Sendable {
         self.playing = playing
         self.status = status
         self.lines = lines
-        self.provider = provider
         self.sequence = sequence
         self.session = session
         self.artworkURL = artworkURL
@@ -49,7 +47,7 @@ public struct Snapshot: Codable, Sendable {
             title.count <= 2000, artist.count <= 2000, trackID.count <= 200,
             !session.isEmpty, session.count <= 100,
             sequence.isFinite, sequence >= 0, sequence <= 9_007_199_254_740_991,
-            sequence.rounded(.towardZero) == sequence, (provider?.count ?? 0) <= 200,
+            sequence.rounded(.towardZero) == sequence,
             [
                 "ready", "loading", "unavailable", "error", "idle", "unsupported", "rate_limited",
                 "auth_required",
