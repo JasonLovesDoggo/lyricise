@@ -1,6 +1,9 @@
 #!/bin/bash
-# Public installer. Run with: curl -fsSL https://lyricise.jsn.cam/install.sh | bash
-set -euo pipefail
+# Public installer. Download completely before running; see README.md.
+set -Eeuo pipefail
+trap 'status=$?; printf "Installation stopped at line %s (exit %s).\n" "$LINENO" "$status" >&2; exit "$status"' ERR
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 main() {
   local version=v0.1.0 assume_yes=false check_only=false
@@ -43,7 +46,7 @@ main() {
   if ! "$assume_yes"; then
     local answer
     if ! { printf 'Continue? [y/N] ' > /dev/tty; read -r answer < /dev/tty; } 2>/dev/null; then
-      echo 'No terminal available. Rerun with: bash -s -- --yes' >&2
+      echo 'No terminal available. Run the downloaded installer with --yes to skip confirmation.' >&2
       return 1
     fi
     case "$answer" in y|Y|yes|YES) ;; *) echo 'Cancelled.'; return 0 ;; esac
@@ -51,19 +54,22 @@ main() {
 
   local base archive expected actual
   installer_temp=$(mktemp -d "${TMPDIR:-/tmp}/lyricise-install.XXXXXX")
-  trap 'rm -rf -- "$installer_temp"' EXIT
+  trap 'status=$?; rm -rf -- "$installer_temp"; exit "$status"' EXIT
   base="https://github.com/JasonLovesDoggo/lyricise/releases/download/$version"
   archive=Lyricise-macos-arm64.zip
   echo 'Downloading Lyricise…'
-  curl --fail --show-error --silent --location --retry 3 --proto '=https' --proto-redir '=https' "$base/$archive" -o "$installer_temp/$archive"
-  curl --fail --show-error --silent --location --retry 3 --proto '=https' --proto-redir '=https' "$base/$archive.sha256" -o "$installer_temp/checksum"
+  curl --fail --show-error --silent --location --retry 3 --connect-timeout 15 --max-time 300 --retry-max-time 600 --proto '=https' --proto-redir '=https' "$base/$archive" -o "$installer_temp/$archive"
+  curl --fail --show-error --silent --location --retry 3 --connect-timeout 15 --max-time 300 --retry-max-time 600 --proto '=https' --proto-redir '=https' "$base/$archive.sha256" -o "$installer_temp/checksum"
   expected=$(awk 'NR == 1 { print $1 }' "$installer_temp/checksum")
   [[ "$expected" =~ ^[a-fA-F0-9]{64}$ ]] || { echo 'Invalid release checksum.' >&2; return 1; }
   actual=$(shasum -a 256 "$installer_temp/$archive" | awk '{ print $1 }')
   [ "$expected" = "$actual" ] || { echo 'Download checksum mismatch. Nothing was installed.' >&2; return 1; }
   ditto -x -k "$installer_temp/$archive" "$installer_temp/package"
   local app="$installer_temp/package/Lyricise.app"
-  [ -f "$installer_temp/package/install-companion.py" ] && [ -x "$app/Contents/MacOS/Lyricise" ] || {
+  [ -f "$installer_temp/package/install-companion.py" ] &&
+    [ -x "$app/Contents/MacOS/Lyricise" ] &&
+    [ -x "$app/Contents/MacOS/LyriciseLauncher" ] &&
+    [ -f "$app/Contents/Resources/lyricise.js" ] || {
     echo 'The release archive is incomplete.' >&2; return 1;
   }
   codesign --verify --deep --strict "$app"
@@ -74,7 +80,10 @@ main() {
   if [ "${#dependencies[@]}" -gt 0 ]; then "$brew_bin" install "${dependencies[@]}"; fi
   local python_bin
   python_bin="$("$brew_bin" --prefix python)/bin/python3"
-  export PATH="$("$brew_bin" --prefix)/bin:$PATH"
+  local brew_prefix
+  brew_prefix=$("$brew_bin" --prefix)
+  export PATH="$brew_prefix/bin:$PATH"
+  [ -x "$python_bin" ] || { echo "Python was not installed at $python_bin." >&2; return 1; }
 
   mkdir -p "$HOME/Applications"
   if pgrep -x Lyricise >/dev/null; then
@@ -94,8 +103,15 @@ main() {
   fi
   if ! ditto "$app" "$target"; then
     rm -rf -- "$target"
-    if [ -n "$backup" ]; then mv "$backup/Lyricise.app" "$target"; fi
-    echo 'App installation failed; the previous app was restored.' >&2
+    if [ -n "$backup" ]; then
+      if ! mv "$backup/Lyricise.app" "$target"; then
+        echo "App installation failed. Restore your previous app from $backup/Lyricise.app." >&2
+        return 1
+      fi
+      echo 'App installation failed; the previous app was restored.' >&2
+    else
+      echo 'App installation failed.' >&2
+    fi
     return 1
   fi
   /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$target"

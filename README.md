@@ -9,10 +9,19 @@ https://github.com/user-attachments/assets/604661a1-94d8-48f2-93fd-0d8f0ebc78e2
 Requires **macOS 27 or newer**, an **Apple silicon Mac**, [Homebrew](https://brew.sh), and the **Spotify desktop app**.
 
 ```sh
-curl -fsSL https://lyricise.jsn.cam/install.sh | bash
+(
+  set -e
+  installer=$(mktemp)
+  trap 'rm -f "$installer"' EXIT
+  curl --proto '=https' --proto-redir '=https' -fsSL --connect-timeout 15 --max-time 60 \
+    https://lyricise.jsn.cam/install.sh -o "$installer"
+  bash "$installer"
+)
 ```
 
-Installs the app in `~/Applications` and connects Spotify. No Xcode needed. The installer asks before making changes; Spotify restarts once. Your preferences and existing Spicetify extensions are preserved.
+Installs the app in `~/Applications` and connects Spotify. No Xcode needed. The installer asks before making changes; Spotify restarts during setup. Your preferences and existing Spicetify extensions are preserved. Downloads are checked before installation; errors stop the installer. Previous app versions are saved in `~/.config/lyricise/backups`.
+
+[Read the installer](scripts/bootstrap.sh). To check requirements without installing, change the last command to `bash "$installer" --check`.
 
 ## Use
 
@@ -36,11 +45,7 @@ Changes reload automatically. See the [default config](Sources/LyriciseCore/Reso
 
 ## Troubleshooting
 
-If lyrics stop working after a Spotify update, reapply the companion:
-
-```sh
-curl -fsSL https://lyricise.jsn.cam/install.sh | bash
-```
+If lyrics stop working after a Spotify update, rerun the install command above.
 
 Some songs have no lyrics or no timing.
 
