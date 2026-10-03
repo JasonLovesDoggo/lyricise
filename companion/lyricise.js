@@ -271,6 +271,41 @@
   let commandBusy = false;
   let commandRetryAt = 0;
   const handledCommands = new Set();
+  async function applyCommand(command) {
+    // Recheck after awaiting HTTP: a delayed command must never control a new song.
+    const uri = Spicetify.Player.data?.item?.uri;
+    if (command.trackID !== uri || !TRACK_URI.test(uri ?? '')) return;
+    switch (command.action) {
+      case 'play':
+        await Spicetify.Player.play();
+        break;
+      case 'pause':
+        await Spicetify.Player.pause();
+        break;
+      case 'previous':
+        await Spicetify.Player.back();
+        break;
+      case 'next':
+        await Spicetify.Player.next();
+        break;
+      case undefined: {
+        // A missing action is the original seek protocol, for older app versions.
+        const duration = Spicetify.Player.getDuration();
+        if (
+          !Number.isFinite(command.position) || command.position < 0 ||
+          command.position >= MAX_POSITION_MS || !Number.isFinite(duration) ||
+          duration <= 0 || command.position > duration
+        ) return;
+        // Player.seek interprets fractional values below one as a percentage.
+        await Spicetify.Player.seek(Math.round(command.position));
+        break;
+      }
+      default:
+        return;
+    }
+    void sendSnapshot();
+  }
+
   async function pollCommand() {
     if (commandBusy || Date.now() < commandRetryAt) return;
     commandBusy = true;
@@ -292,23 +327,7 @@
       handledCommands.add(command.id);
       if (handledCommands.size > MAX_REMEMBERED_COMMANDS)
         handledCommands.delete(handledCommands.values().next().value);
-      // Recheck after awaiting HTTP: a delayed command must never seek a new song.
-      const uri = Spicetify.Player.data?.item?.uri;
-      const duration = Spicetify.Player.getDuration();
-      if (
-        command.trackID !== uri ||
-        !TRACK_URI.test(uri ?? '') ||
-        !Number.isFinite(command.position) ||
-        command.position < 0 ||
-        command.position >= MAX_POSITION_MS ||
-        !Number.isFinite(duration) ||
-        duration <= 0 ||
-        command.position > duration
-      )
-        return;
-      // Player.seek interprets fractional values below one as a percentage.
-      Spicetify.Player.seek(Math.round(command.position));
-      void sendSnapshot();
+      await applyCommand(command);
     } catch {
       commandRetryAt = Date.now() + COMMAND_RETRY_MS;
     } finally {

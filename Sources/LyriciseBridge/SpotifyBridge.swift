@@ -29,6 +29,10 @@ public struct SpotifyBridge: Sendable {
         await state.seek(trackID: trackID, position: position)
     }
 
+    public func control(_ action: PlaybackAction, trackID: String) async {
+        await state.control(action, trackID: trackID)
+    }
+
     func application() -> some ApplicationProtocol {
         let router = Router(context: BridgeContext.self)
         router.add(middleware: CompanionAccess(token: token))
@@ -104,10 +108,11 @@ private struct CompanionAccess: RouterMiddleware {
 
 struct EmptyResponse: ResponseEncodable {}
 
-struct SeekCommand: ResponseEncodable {
+struct PlayerCommand: ResponseEncodable {
     var id: String?
     var trackID: String?
     var position: Double?
+    var action: PlaybackAction?
 }
 
 struct BridgeHealth: ResponseEncodable {
@@ -122,18 +127,23 @@ struct BridgeHealth: ResponseEncodable {
 }
 
 actor BridgeState {
-    private var command = SeekCommand()
+    private var command = PlayerCommand()
     private var commandExpires = ContinuousClock.now
     private(set) var health = BridgeHealth()
 
     func seek(trackID: String, position: Double, now: ContinuousClock.Instant = .now) {
-        command = SeekCommand(id: UUID().uuidString, trackID: trackID, position: position)
+        command = PlayerCommand(id: UUID().uuidString, trackID: trackID, position: position)
         // Commands must not replay after a stalled companion reconnects.
         commandExpires = now.advanced(by: .seconds(2))
     }
 
-    func pendingCommand(now: ContinuousClock.Instant = .now) -> SeekCommand {
-        commandExpires > now ? command : SeekCommand()
+    func control(_ action: PlaybackAction, trackID: String, now: ContinuousClock.Instant = .now) {
+        command = PlayerCommand(id: UUID().uuidString, trackID: trackID, action: action)
+        commandExpires = now.advanced(by: .seconds(2))
+    }
+
+    func pendingCommand(now: ContinuousClock.Instant = .now) -> PlayerCommand {
+        commandExpires > now ? command : PlayerCommand()
     }
 
     func updateHealth(_ snapshot: Snapshot) {

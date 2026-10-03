@@ -22,6 +22,16 @@ struct PlaybackTests {
             sequence: 1, session: "first")
     }
 
+    @Test func playbackControlsRequireAFreshTrack() {
+        let playback = PlaybackState()
+        var value = snapshot()
+        value.trackID = "spotify:track:abc"
+        #expect(playback.controllableTrack(at: start) == nil)
+        playback.accept(value, at: start)
+        #expect(playback.controllableTrack(at: start) == value.trackID)
+        #expect(playback.controllableTrack(at: start.advanced(by: .seconds(7))) == nil)
+    }
+
     @Test func unchangedTicksAndHeartbeatsDoNotInvalidateDisplayedLyrics() {
         let playback = PlaybackState()
         var value = snapshot()
@@ -71,10 +81,12 @@ struct PlaybackTests {
         playback.accept(value, at: start)
         playback.tick(at: start.advanced(by: .seconds(5)))
         #expect(playback.active == 10)
+        #expect(playback.playing)
         value.sequence = 2
         value.position = 1000
         value.playing = false
         playback.accept(value, at: start.advanced(by: .seconds(5)))
+        #expect(!playback.playing)
         playback.tick(at: start.advanced(by: .seconds(10)))
         #expect(playback.active == 10)
     }
@@ -121,10 +133,12 @@ struct PlaybackTests {
         value.sequence = 2
         playback.accept(value, at: start)
         value.title = "Stale title"
+        value.playing = false
         #expect(!playback.accept(value, at: start.advanced(by: .seconds(5))))
         value.sequence = 1
         #expect(!playback.accept(value, at: start.advanced(by: .seconds(5))))
         #expect(playback.title == "Title")
+        #expect(playback.playing)
         #expect(playback.recenter == 1)
         playback.tick(at: start.advanced(by: .seconds(7)))
         #expect(!playback.connected)

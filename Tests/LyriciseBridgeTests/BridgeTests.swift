@@ -118,6 +118,14 @@ struct BridgeTests {
             #expect(seek.position == 5000)
             #expect(seek.id?.isEmpty == false)
 
+            await bridge.control(.pause, trackID: "spotify:track:abc")
+            let response = try await client.execute(uri: "/command", method: .get, headers: headers)
+            let control = try JSONDecoder().decode(Command.self, from: Data(response.body.readableBytesView))
+            #expect(control.action == .pause)
+            #expect(control.trackID == "spotify:track:abc")
+            #expect(control.position == nil)
+            #expect(control.id?.isEmpty == false)
+
             let missing = try await client.execute(uri: "/missing", method: .get, headers: headers)
             #expect(missing.status == .notFound)
             #expect(missing.headers[.accessControlAllowOrigin] == "*")
@@ -137,21 +145,22 @@ struct BridgeTests {
         }
     }
 
-    @Test func commandExpiresAtBoundaryAndIsReplacedByNewSeek() async {
+    @Test func commandsExpireAndReplaceEachOther() async {
         let state = BridgeState()
         let now = ContinuousClock.now
         #expect(await state.pendingCommand(now: now).id == nil)
         await state.seek(trackID: "first", position: 1000, now: now)
-        let first = await state.pendingCommand(now: now.advanced(by: .milliseconds(1999)))
+        let first = await state.pendingCommand(now: now)
         #expect(first.trackID == "first")
         #expect(first.position == 1000)
         #expect(first.id != nil)
-        #expect(await state.pendingCommand(now: now.advanced(by: .seconds(2))).id == nil)
-        await state.seek(trackID: "second", position: 2000, now: now.advanced(by: .seconds(2)))
-        let second = await state.pendingCommand(now: now.advanced(by: .seconds(3)))
+        await state.control(.pause, trackID: "second", now: now.advanced(by: .seconds(1)))
+        let second = await state.pendingCommand(now: now.advanced(by: .seconds(2)))
         #expect(second.trackID == "second")
-        #expect(second.position == 2000)
+        #expect(second.action == .pause)
+        #expect(second.position == nil)
         #expect(second.id != first.id)
+        #expect(await state.pendingCommand(now: now.advanced(by: .seconds(3))).id == nil)
     }
 
     private struct Health: Decodable {
@@ -169,5 +178,6 @@ struct BridgeTests {
         var id: String?
         var trackID: String?
         var position: Double?
+        var action: PlaybackAction?
     }
 }

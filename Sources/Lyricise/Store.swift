@@ -53,5 +53,9 @@ import Observation
         guard let position = playback.seekPosition(for: line, at: .now) else { return }
         bridge?.seek(trackID: playback.trackID, position: position)
     }
+    func control(_ action: PlaybackAction) {
+        guard let trackID = playback.controllableTrack(at: .now) else { return }
+        bridge?.control(action, trackID: trackID)
+    }
     func openConfig() { NSWorkspace.shared.open(settings.url) }
 }

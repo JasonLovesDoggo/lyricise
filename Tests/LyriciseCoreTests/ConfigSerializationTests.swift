@@ -22,6 +22,7 @@ import Testing
     config.borderWidth = 2.5
     config.trackTitleVisibility = .hover
     config.artworkVisibility = .always
+    config.playbackControlsVisibility = .hover
     config.followPlayback = false
     config.font = "A \"Quoted\" Font \\ Variant"
     config.offsetMS = -125.5
@@ -123,4 +124,9 @@ import Testing
         #expect(WindowHotKey.recording(keyCode: binding.keyCode, modifiers: 0) == nil)
     }
     #expect(WindowHotKey.recording(keyCode: UInt32.max, modifiers: UInt32.max) == nil)
+}
+
+@Test func playbackControlsDefaultToHidden() throws {
+    #expect(try AppConfig.parse("").playbackControlsVisibility == .never)
+    #expect(try AppConfig.parse(AppConfig.defaultTOML).playbackControlsVisibility == .never)
 }

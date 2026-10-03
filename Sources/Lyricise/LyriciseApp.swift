@@ -293,7 +293,8 @@ struct LyricsView: View {
                                     Button("Back to current line") {
                                         suspended = false
                                         if let id = store.playback.active { proxy.scrollTo(id, anchor: .center) }
-                                    }.buttonStyle(.bordered).controlSize(.small).padding(.bottom, 10)
+                                    }.buttonStyle(.bordered).controlSize(.small)
+                                        .padding(.bottom, store.settings.value.playbackControlsVisibility == .never ? 10 : 58)
                                 }
                             }
                             .onChange(of: store.playback.active) { _, id in
@@ -359,6 +360,11 @@ struct LyricsView: View {
                 .opacity(store.hoveringControls ? 1 : 0)
                 .allowsHitTesting(store.hoveringControls)
                 .accessibilityHidden(!store.hoveringControls)
+        }
+        .overlay(alignment: .bottom) {
+            if store.settings.value.playbackControlsVisibility != .never {
+                PlaybackControls(store: store).padding(.bottom, 10)
+            }
         }
         .overlay(alignment: .bottomTrailing) {
             Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 9))
