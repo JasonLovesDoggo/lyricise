@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New version (for example, v0.1.4)'
+        required: true
+        type: string
+  pull_request:
+    paths:
+      - '.github/workflows/release.yml'
+      - 'scripts/build.sh'
+      - 'scripts/package-release.sh'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event_name }}-${{ github.event.pull_request.number || 'publish' }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      RELEASE_TAG: ${{ inputs.version || 'v0.0.0' }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Validate release
+        shell: bash
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || {
+            echo 'Use a version such as v0.1.4.' >&2; exit 1;
+          }
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            [[ "$GITHUB_REF" == refs/heads/main ]] || { echo 'Run releases from main.' >&2; exit 1; }
+            existing=$(git ls-remote --tags origin "refs/tags/$RELEASE_TAG")
+            [[ -z "$existing" ]] || { echo 'That release tag already exists.' >&2; exit 1; }
+          fi
+          [[ "$(uname -m)" == arm64 ]]
+          xcodebuild -version
+          swift --version
+      - name: Install build tool
+        run: brew install just
+      - name: Test
+        run: just test
+      - name: Package
+        run: scripts/package-release.sh "$RELEASE_TAG"
+      - name: Verify release files
+        shell: bash
+        run: |
+          cd build/release
+          shasum -a 256 -c Lyricise-macos-arm64.zip.sha256
+          bash -n install.sh
+          expected=$(awk '/^release_sha256=/ {sub(/^release_sha256=/, ""); print}' install.sh)
+          actual=$(shasum -a 256 Lyricise-macos-arm64.zip | awk '{print $1}')
+          [[ "$expected" == "$actual" ]]
+          grep -Fx "release_version=$RELEASE_TAG" install.sh
+          ditto -x -k Lyricise-macos-arm64.zip "$RUNNER_TEMP/lyricise-release"
+          codesign --verify --deep --strict "$RUNNER_TEMP/lyricise-release/Lyricise.app"
+          actual_version=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$RUNNER_TEMP/lyricise-release/Lyricise.app/Contents/Info.plist")
+          [[ "$actual_version" == "${RELEASE_TAG#v}" ]]
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release
+          path: |
+            build/release/Lyricise-macos-arm64.zip
+            build/release/Lyricise-macos-arm64.zip.sha256
+            build/release/install.sh
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release
+          path: release
+      - name: Publish complete release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.version }}
+        shell: bash
+        run: |
+          gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "$RELEASE_TAG" --draft --generate-notes
+          gh release upload "$RELEASE_TAG" release/Lyricise-macos-arm64.zip release/Lyricise-macos-arm64.zip.sha256 release/install.sh
+          gh release edit "$RELEASE_TAG" --draft=false --latest
+          printf 'Published [%s](https://github.com/%s/releases/tag/%s)\n' "$RELEASE_TAG" "$GH_REPO" "$RELEASE_TAG" >> "$GITHUB_STEP_SUMMARY"

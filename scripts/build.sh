@@ -1,7 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+export DEVELOPER_DIR=${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}
+app_version=${LYRICISE_VERSION:-0.1.3}
+[[ "$app_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid app version.' >&2; exit 1; }
 swift build -c release
 APP="$PWD/build/Lyricise.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
@@ -35,5 +37,7 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>NSHighResolutionCapable</key><true/>
 </dict></plist>
 PLIST
+/usr/libexec/PlistBuddy -c "Set CFBundleShortVersionString $app_version" "$APP/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set CFBundleVersion $app_version" "$APP/Contents/Info.plist"
 codesign --force --sign - "$APP"
 echo "Built $APP"
