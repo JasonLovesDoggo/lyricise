@@ -22,6 +22,15 @@ public struct WindowHotKey: Sendable, Equatable {
         return Self(keyCode: UInt32(code), modifiers: modifiers)
     }
 
+    public static func recording(keyCode: UInt32, modifiers: UInt32) -> String? {
+        guard let key = keys.first(where: { UInt32($0.value) == keyCode })?.key else { return nil }
+        let flags = [("ctrl", controlKey), ("alt", optionKey), ("shift", shiftKey), ("cmd", cmdKey)]
+        let names = flags.compactMap { name, flag in modifiers & UInt32(flag) != 0 ? name : nil }
+        let source = (names + [key]).joined(separator: "+")
+        guard (try? parse(source)) != nil else { return nil }
+        return source
+    }
+
     private static let keys = [
         "a": kVK_ANSI_A, "b": kVK_ANSI_B, "c": kVK_ANSI_C, "d": kVK_ANSI_D,
         "e": kVK_ANSI_E, "f": kVK_ANSI_F, "g": kVK_ANSI_G, "h": kVK_ANSI_H,

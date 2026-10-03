@@ -114,3 +114,13 @@ import Testing
         }
     }
 }
+
+@Test func recordedHotKeysRoundTrip() throws {
+    for source in ["cmd+shift+l", "ctrl+alt+space", "cmd+escape", "ctrl+f12"] {
+        let binding = try #require(try WindowHotKey.parse(source))
+        let recorded = try #require(WindowHotKey.recording(keyCode: binding.keyCode, modifiers: binding.modifiers))
+        #expect(try WindowHotKey.parse(recorded) == binding)
+        #expect(WindowHotKey.recording(keyCode: binding.keyCode, modifiers: 0) == nil)
+    }
+    #expect(WindowHotKey.recording(keyCode: UInt32.max, modifiers: UInt32.max) == nil)
+}

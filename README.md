@@ -30,7 +30,7 @@ Click **Open Config** in settings, or edit:
 ~/.config/lyricise/config.toml
 ```
 
-Set `toggle_hotkey = "cmd+shift+l"` under `[window]` for a global show/hide shortcut while Lyricise is running. It defaults to `""` (disabled) and updates when you save. Use `cmd`, `ctrl`, `alt`, or `shift` with a letter, digit, `space`, `return`, `tab`, `escape`, arrow name, or `f1`–`f12`. Include at least one of `cmd`, `ctrl`, or `alt`. Letter keys use physical US keyboard positions.
+Set a show/hide shortcut in **Quick Settings → Window**. Click **Record shortcut**, then press your keys. Use × to clear it. Shortcuts are disabled by default and work while Lyricise is running.
 
 Browse the [theme gallery](docs/THEMES.md).
 

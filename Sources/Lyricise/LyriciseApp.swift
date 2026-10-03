@@ -133,7 +133,11 @@ import SwiftUI
                 ? [.canJoinAllSpaces, .fullScreenAuxiliary] : [.moveToActiveSpace, .fullScreenAuxiliary]
             updateBlur()
             do {
-                store.hotKeyError = hotKey.update(try WindowHotKey.parse(store.settings.value.toggleHotKey))
+                if store.recordingHotKey {
+                    hotKey.stop()
+                } else {
+                    store.hotKeyError = hotKey.update(try WindowHotKey.parse(store.settings.value.toggleHotKey))
+                }
             } catch { store.hotKeyError = error.localizedDescription }
             _ = store.settings.value
         } onChange: { [weak self] in

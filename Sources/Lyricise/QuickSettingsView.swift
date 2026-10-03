@@ -4,6 +4,7 @@ import SwiftUI
 
 @MainActor struct QuickSettingsView: View {
     let store: Store
+    @State private var tab = 0
     private static let fontNames =
         ["SF Pro"] + NSFontManager.shared.availableFontFamilies.filter { $0 != "SF Pro" }.sorted()
     private func setting<Value>(_ key: WritableKeyPath<AppConfig, Value>) -> Binding<Value> {
@@ -21,6 +22,31 @@ import SwiftUI
                 }
                 .buttonStyle(.plain).help("Close settings")
             }
+            Picker("Settings category", selection: $tab) {
+                Text("Lyrics").tag(0)
+                Text("Appearance").tag(1)
+                Text("Window").tag(2)
+            }.pickerStyle(.segmented)
+            Group {
+                switch tab {
+                case 0: lyricsSettings
+                case 1: appearanceSettings
+                default: windowSettings
+                }
+            }
+            if let error = store.settings.error {
+                Text(error).font(.caption).foregroundStyle(.red).fixedSize(
+                    horizontal: false, vertical: true)
+            }
+            Button("Open Config") { store.openConfig() }
+                .font(.callout)
+        }
+        .toggleStyle(.switch).controlSize(.small)
+        .padding(20).frame(width: 340)
+    }
+
+    private var lyricsSettings: some View {
+        VStack(alignment: .leading, spacing: 12) {
             Picker("Font", selection: setting(\.font)) {
                 ForEach(Self.fontNames, id: \.self) { name in
                     Text(name == "SF Pro" ? "System · SF Pro" : name).tag(name)
@@ -46,7 +72,22 @@ import SwiftUI
                     if !editing { store.settings.set(\.fontSize, to: store.settings.value.fontSize) }
                 }.accessibilityLabel("Font size")
             }
-            Divider()
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Song details")
+                VisibilityPicker(title: "Song details", selection: setting(\.trackTitleVisibility))
+                    .pickerStyle(.segmented).labelsHidden()
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Album cover")
+                VisibilityPicker(title: "Album cover", selection: setting(\.artworkVisibility))
+                    .pickerStyle(.segmented).labelsHidden()
+            }
+            Toggle("Follow current lyric", isOn: setting(\.followPlayback))
+        }
+    }
+
+    private var appearanceSettings: some View {
+        VStack(alignment: .leading, spacing: 12) {
             VStack(spacing: 6) {
                 HStack {
                     Text("Blur intensity")
@@ -79,29 +120,17 @@ import SwiftUI
                 Stepper("Border width", value: setting(\.borderWidth), in: 0...12, step: 0.5)
                     .labelsHidden()
             }
+        }
+    }
+
+    private var windowSettings: some View {
+        VStack(alignment: .leading, spacing: 12) {
             Toggle("Always on top", isOn: setting(\.alwaysOnTop))
             Toggle("Show on all Spaces", isOn: setting(\.allSpaces))
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Song details")
-                VisibilityPicker(title: "Song details", selection: setting(\.trackTitleVisibility))
-                    .pickerStyle(.segmented).labelsHidden()
-            }
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Album cover")
-                VisibilityPicker(title: "Album cover", selection: setting(\.artworkVisibility))
-                    .pickerStyle(.segmented).labelsHidden()
-            }
-            Toggle("Follow current lyric", isOn: setting(\.followPlayback))
-            if let error = store.settings.error {
-                Text(error).font(.caption).foregroundStyle(.red).fixedSize(
-                    horizontal: false, vertical: true)
-            }
-            Button("Open Config") { store.openConfig() }
-                .font(.callout)
+            HotKeyRecorder(store: store)
         }
-        .toggleStyle(.switch).controlSize(.small)
-        .padding(20).frame(width: 340)
     }
+
 }
 
 /// A native field accepts the first click without taking focus when the popover opens.
