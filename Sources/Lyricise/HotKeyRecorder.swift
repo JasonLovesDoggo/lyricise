@@ -13,18 +13,40 @@ import SwiftUI
             HStack {
                 Text("Show / hide")
                 Spacer()
-                Button(store.recordingHotKey ? "Press shortcut…" : label) {
-                    if store.recordingHotKey { stop() } else { start() }
-                }
-                .help("Record a global shortcut. Escape cancels; Delete clears it.")
-                if !store.settings.value.toggleHotKey.isEmpty {
+                HStack(spacing: 0) {
                     Button {
-                        stop()
-                        store.settings.set(\.toggleHotKey, to: "")
-                    } label: { Image(systemName: "xmark.circle.fill") }
-                    .buttonStyle(.plain).help("Clear shortcut")
-                    .accessibilityLabel("Clear shortcut")
+                        if store.recordingHotKey { stop() } else { start() }
+                    } label: {
+                        Text(store.recordingHotKey ? "Type shortcut…" : label)
+                            .frame(maxWidth: .infinity, minHeight: 26)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Record a global shortcut. Escape cancels; Delete clears it.")
+                    .accessibilityLabel("Record shortcut")
+                    if !store.settings.value.toggleHotKey.isEmpty && !store.recordingHotKey {
+                        Button {
+                            stop()
+                            store.settings.set(\.toggleHotKey, to: "")
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 10, weight: .medium))
+                                .frame(width: 25, height: 26)
+                                .background(.primary.opacity(0.04))
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain).help("Clear shortcut")
+                        .accessibilityLabel("Clear shortcut")
+                    }
                 }
+                .frame(width: 164)
+                .background(.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6)
+                        .strokeBorder(store.recordingHotKey ? Color.accentColor : .clear, lineWidth: 2)
+                }
+
             }
             if let message = hint ?? store.hotKeyError {
                 Text(message).font(.caption).foregroundStyle(.secondary)
@@ -38,7 +60,14 @@ import SwiftUI
 
     private var label: String {
         let shortcut = store.settings.value.toggleHotKey
-        return shortcut.isEmpty ? "Record shortcut" : shortcut.uppercased()
+        guard !shortcut.isEmpty else { return "Record Shortcut" }
+        let symbols = ["cmd": "⌘", "ctrl": "⌃", "alt": "⌥", "shift": "⇧",
+                       "space": "Space", "return": "↩", "tab": "⇥", "escape": "⎋",
+                       "left": "←", "right": "→", "up": "↑", "down": "↓"]
+        return shortcut.lowercased().components(separatedBy: "+").map { part in
+            let key = part.trimmingCharacters(in: .whitespaces)
+            return symbols[key] ?? key.uppercased()
+        }.joined()
     }
 
     private func start() {

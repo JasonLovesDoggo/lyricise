@@ -30,7 +30,7 @@ Click **Open Config** in settings, or edit:
 ~/.config/lyricise/config.toml
 ```
 
-Set a show/hide shortcut in **Quick Settings → Window**. Click **Record shortcut**, then press your keys. Use × to clear it. Shortcuts are disabled by default and work while Lyricise is running.
+Set a show/hide shortcut in **Quick Settings**. Click **Record shortcut**, then press your keys. Use × to clear it. Shortcuts are disabled by default and work while Lyricise is running.
 
 Browse the [theme gallery](docs/THEMES.md).
 
