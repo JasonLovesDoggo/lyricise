@@ -34,5 +34,9 @@ import LyriciseCore
         Task { await server.seek(trackID: trackID, position: position) }
     }
 
+    func control(_ action: PlaybackAction, trackID: String) {
+        Task { await server.control(action, trackID: trackID) }
+    }
+
     deinit { task?.cancel() }
 }

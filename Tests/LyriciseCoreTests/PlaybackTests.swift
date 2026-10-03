@@ -22,6 +22,23 @@ struct PlaybackTests {
             sequence: 1, session: "first")
     }
 
+    @Test func playbackControlsUseFreshAcceptedPlaybackState() {
+        let playback = PlaybackState()
+        var value = snapshot()
+        value.trackID = "spotify:track:abc"
+        #expect(playback.controllableTrack(at: start) == nil)
+        playback.accept(value, at: start)
+        #expect(playback.playing)
+        #expect(playback.controllableTrack(at: start) == value.trackID)
+        value.playing = false
+        playback.accept(value, at: start)
+        #expect(playback.playing) // Duplicate snapshots cannot change the button state.
+        value.sequence = 2
+        playback.accept(value, at: start)
+        #expect(!playback.playing)
+        #expect(playback.controllableTrack(at: start.advanced(by: .seconds(7))) == nil)
+    }
+
     @Test func unchangedTicksAndHeartbeatsDoNotInvalidateDisplayedLyrics() {
         let playback = PlaybackState()
         var value = snapshot()

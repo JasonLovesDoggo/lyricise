@@ -124,3 +124,14 @@ import Testing
     }
     #expect(WindowHotKey.recording(keyCode: UInt32.max, modifiers: UInt32.max) == nil)
 }
+
+@Test func playbackControlsAreOptInAndPersistThroughOtherSettingsEdits() throws {
+    #expect(try AppConfig.parse("").playbackControlsVisibility == .never)
+    #expect(try AppConfig.parse(AppConfig.defaultTOML).playbackControlsVisibility == .never)
+    for visibility in ContentVisibility.allCases {
+        var config = try AppConfig.parse("[window]\nplayback_controls = '\(visibility.rawValue)'")
+        config.fontSize = 24
+        #expect(try AppConfig.parse(config.serialized()).playbackControlsVisibility == visibility)
+    }
+    #expect(throws: (any Error).self) { try AppConfig.parse("[window]\nplayback_controls = 'sometimes'") }
+}

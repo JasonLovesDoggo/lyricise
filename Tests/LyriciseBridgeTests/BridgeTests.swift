@@ -118,6 +118,16 @@ struct BridgeTests {
             #expect(seek.position == 5000)
             #expect(seek.id?.isEmpty == false)
 
+            for action in PlaybackAction.allCases {
+                await bridge.control(action, trackID: "spotify:track:abc")
+                let response = try await client.execute(uri: "/command", method: .get, headers: headers)
+                let control = try JSONDecoder().decode(Command.self, from: Data(response.body.readableBytesView))
+                #expect(control.action == action)
+                #expect(control.trackID == "spotify:track:abc")
+                #expect(control.position == nil)
+                #expect(control.id?.isEmpty == false)
+            }
+
             let missing = try await client.execute(uri: "/missing", method: .get, headers: headers)
             #expect(missing.status == .notFound)
             #expect(missing.headers[.accessControlAllowOrigin] == "*")
@@ -154,6 +164,17 @@ struct BridgeTests {
         #expect(second.id != first.id)
     }
 
+    @Test func playbackCommandsExpireAndReplacePendingSeeks() async {
+        let state = BridgeState()
+        let now = ContinuousClock.now
+        await state.seek(trackID: "spotify:track:abc", position: 1000, now: now)
+        await state.control(.pause, trackID: "spotify:track:abc", now: now)
+        let command = await state.pendingCommand(now: now)
+        #expect(command.action == .pause)
+        #expect(command.position == nil)
+        #expect(await state.pendingCommand(now: now.advanced(by: .seconds(2))).id == nil)
+    }
+
     private struct Health: Decodable {
         var received: Bool
         var status: String?
@@ -169,5 +190,6 @@ struct BridgeTests {
         var id: String?
         var trackID: String?
         var position: Double?
+        var action: PlaybackAction?
     }
 }

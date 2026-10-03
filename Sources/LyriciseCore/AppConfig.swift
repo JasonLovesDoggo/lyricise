@@ -3,6 +3,7 @@ import TOML
 
 public struct AppConfig: Sendable, Equatable {
     public var toggleHotKey = ""
+    public var playbackControlsVisibility = ContentVisibility.never
     public var width = 420.0, height = 300.0
     public var alwaysOnTop = true, allSpaces = true, rememberPosition = true
     public var background = "#1e1e2e", accent = "#b4befe", text = "#cdd6f4", mutedText = "#6c7086"
@@ -18,6 +19,7 @@ public struct AppConfig: Sendable, Equatable {
         let decoded = try TOMLDecoder().decode(FileConfig.self, from: source)
         var config = Self()
         if let window = decoded.window {
+            config.playbackControlsVisibility = window.playback_controls ?? config.playbackControlsVisibility
             config.toggleHotKey = window.toggle_hotkey ?? config.toggleHotKey
             config.width = window.width ?? config.width
             config.height = window.height ?? config.height
@@ -62,7 +64,8 @@ public struct AppConfig: Sendable, Equatable {
         let file = FileConfig(
             window: .init(
                 width: width, height: height, always_on_top: alwaysOnTop,
-                all_spaces: allSpaces, remember_position: rememberPosition, toggle_hotkey: toggleHotKey),
+                all_spaces: allSpaces, remember_position: rememberPosition, toggle_hotkey: toggleHotKey,
+                playback_controls: playbackControlsVisibility),
             appearance: .init(
                 background: background, background_opacity: opacity, blur: .init(radius: blurRadius),
                 accent: accent, text: text, muted_text: mutedText, font: font,
@@ -113,6 +116,7 @@ private struct FileConfig: Codable {
         var width: Double?, height: Double?, always_on_top: Bool?, all_spaces: Bool?,
             remember_position: Bool?
         var toggle_hotkey: String?
+        var playback_controls: ContentVisibility?
     }
     struct Appearance: Codable {
         var background: String?, background_opacity: Double?, blur: BlurValue?, accent: String?,

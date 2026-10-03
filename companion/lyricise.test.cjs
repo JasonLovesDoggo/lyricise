@@ -10,6 +10,7 @@ function harness(modern = false) {
     events = {},
     commands = [],
     seeks = [],
+    playbackActions = [],
     timers = {},
     buttons = [],
     toggles = [];
@@ -23,6 +24,10 @@ function harness(modern = false) {
     getProgress: () => 2000,
     getDuration: () => 100000,
     isPlaying: () => true,
+    play: () => playbackActions.push('play'),
+    pause: () => playbackActions.push('pause'),
+    back: () => playbackActions.push('previous'),
+    next: () => playbackActions.push('next'),
     seek: (position) => seeks.push(position),
     addEventListener: (name, callback) => (events[name] = callback),
   };
@@ -119,6 +124,7 @@ function harness(modern = false) {
     events,
     commands,
     seeks,
+    playbackActions,
     buttons,
     toggles,
     heartbeat: () => timers[1000](),
@@ -414,3 +420,36 @@ for (const modern of [false, true]) {
     });
   }
 }
+
+test('playback commands execute once for the current track without seek positions', async () => {
+  const h = harness();
+  await settle();
+  for (const action of ['play', 'pause', 'previous', 'next']) {
+    const command = { id: action, trackID: 'spotify:track:A', action };
+    h.commands.push(command, command);
+    await h.poll();
+    await h.poll();
+  }
+  assert.deepEqual(h.playbackActions, ['play', 'pause', 'previous', 'next']);
+  assert.deepEqual(h.seeks, []);
+});
+
+test('playback commands reject unknown actions and stale tracks', async () => {
+  const h = harness();
+  await settle();
+  for (const command of [
+    { id: 'wrong-track', trackID: 'spotify:track:B', action: 'next' },
+    { id: 'unknown', trackID: 'spotify:track:A', action: 'toggle', position: 1000 },
+  ]) {
+    h.commands.push(command);
+    await h.poll();
+  }
+  let resolve;
+  h.setCommandResponse(() => new Promise((done) => { resolve = done; }));
+  const polling = h.poll();
+  h.Player.data.item.uri = 'spotify:track:B';
+  resolve({ ok: true, json: async () => ({ id: 'late', trackID: 'spotify:track:A', action: 'next' }) });
+  await polling;
+  assert.deepEqual(h.playbackActions, []);
+  assert.deepEqual(h.seeks, []);
+});

@@ -9,6 +9,7 @@ import Observation
     public private(set) var recenter = 0
     public private(set) var animateLine = false
     public private(set) var connected = false
+    public private(set) var playing = false
 
     @ObservationIgnored private var snapshot: Snapshot?
     @ObservationIgnored private var received = ContinuousClock.now
@@ -59,6 +60,7 @@ import Observation
         if changed { lines = [] }
         if let incoming = value.lines, incoming != lines { lines = incoming }
         snapshot = value
+        playing = value.playing
         trackID = value.trackID
         title = value.title.isEmpty ? "Lyricise" : value.title
         artist = value.artist
@@ -84,6 +86,11 @@ import Observation
             let time = line.time, time.isFinite, time >= 0, time <= snapshot.duration
         else { return nil }
         return time
+    }
+
+    public func controllableTrack(at now: ContinuousClock.Instant) -> String? {
+        guard isFresh(at: now), trackID.hasPrefix("spotify:track:") else { return nil }
+        return trackID
     }
 
     private func isFresh(at now: ContinuousClock.Instant) -> Bool {
