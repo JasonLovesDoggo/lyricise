@@ -136,8 +136,16 @@ import SwiftUI
     }
     func refreshHover() {
         // Window coordinates stay stable when SwiftUI changes its subviews or opens a menu.
-        let inside = panel.isVisible && panel.frame.contains(NSEvent.mouseLocation)
+        let pointer = NSEvent.mouseLocation
+        let frame = panel.frame
+        let inside = panel.isVisible && frame.contains(pointer)
         if store.hovering != inside { store.hovering = inside }
+        // AppKit's screen coordinates start at the bottom-left; controls occupy the top-left 35%.
+        let controlsRegion = NSRect(
+            x: frame.minX, y: frame.maxY - frame.height * 0.35,
+            width: frame.width * 0.35, height: frame.height * 0.35)
+        let nearControls = inside && controlsRegion.contains(pointer)
+        if store.hoveringControls != nearControls { store.hoveringControls = nearControls }
     }
     func show() {
         NSApplication.shared.unhide(nil)
@@ -335,7 +343,9 @@ struct LyricsView: View {
             }.buttonStyle(.plain).padding(5)
                 .background(Color(hex: store.settings.value.background).opacity(0.95), in: Capsule())
                 .padding(5)
-                .opacity(hovering ? 1 : 0).allowsHitTesting(hovering)
+                .opacity(store.hoveringControls ? 1 : 0)
+                .allowsHitTesting(store.hoveringControls)
+                .accessibilityHidden(!store.hoveringControls)
         }
         .overlay(alignment: .bottomTrailing) {
             Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 9))

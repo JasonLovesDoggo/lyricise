@@ -5,6 +5,7 @@ import Observation
 @MainActor @Observable final class Store {
     let settings: Settings
     var hovering = false
+    var hoveringControls = false
     var quickSettingsPresented = false
     let playback = PlaybackState()
     var connectionError: String?
