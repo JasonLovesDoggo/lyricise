@@ -32,12 +32,6 @@ Click **Open Config** in settings, or edit:
 
 Set a show/hide shortcut in **Quick Settings**. Click **Record shortcut**, then press your keys. Use × to clear it. Shortcuts are disabled by default and work while Lyricise is running.
 
-Playback controls are hidden by default. To show them on hover, add this to your existing `[window]` section:
-
-```toml
-playback_controls = "hover"
-```
-
 Browse the [theme gallery](docs/THEMES.md).
 
 Changes reload automatically. See the [default config](Sources/LyriciseCore/Resources/default.toml) for all settings.
