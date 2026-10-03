@@ -33,6 +33,11 @@ cli = shutil.which('spicetify') or next((p for p in ['/opt/homebrew/bin/spicetif
 if not cli:
     raise SystemExit('Install Spicetify first: brew install spicetify-cli')
 config_path = pathlib.Path(subprocess.check_output([cli, '-c'], text=True).strip())
+# -c prints the intended path without creating a first-run configuration.
+if not config_path.exists():
+    subprocess.run([cli, 'config'], check=True, stdout=subprocess.DEVNULL)
+    if not config_path.is_file():
+        raise SystemExit(f'Spicetify did not create its configuration at {config_path}. Run spicetify once, then retry.')
 spice = config_path.parent
 backup = pathlib.Path(tempfile.mkdtemp(prefix='spicetify-backup-' + datetime.datetime.now().strftime('%Y%m%d-'), dir=config))
 shutil.copy2(config_path, backup / 'config-xpui.ini')

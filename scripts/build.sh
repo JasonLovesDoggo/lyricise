@@ -27,8 +27,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundleName</key><string>Lyricise</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.1.2</string>
-<key>CFBundleVersion</key><string>3</string>
+<key>CFBundleShortVersionString</key><string>0.1.3</string>
+<key>CFBundleVersion</key><string>4</string>
 <key>LSMinimumSystemVersion</key><string>15.0</string>
 <key>CFBundleURLTypes</key><array><dict><key>CFBundleURLName</key><string>cam.jsn.lyricise.launch</string><key>CFBundleURLSchemes</key><array><string>lyricise</string></array></dict></array>
 <key>LSUIElement</key><true/>

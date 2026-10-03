@@ -10,7 +10,7 @@ import tempfile
 from unittest.mock import patch
 
 script = pathlib.Path(__file__).resolve().parent / 'install-companion.py'
-for valid_path in (False, True):
+for valid_path, fresh_install in ((False, False), (True, False), (False, True)):
     with tempfile.TemporaryDirectory(prefix='lyricise-companion-test-') as temporary:
         root = pathlib.Path(temporary)
         app = root / 'Lyricise.app'
@@ -25,10 +25,14 @@ for valid_path in (False, True):
         ini = spice / 'config-xpui.ini'
         configured_path = str(root) if valid_path else ''
         original = f'[Setting]\nspotify_path = {configured_path}\n[AdditionalOptions]\nextensions = existing.js\n'
-        ini.write_text(original)
+        if not fresh_install:
+            ini.write_text(original)
         calls = []
         def run(command, **kwargs):
             calls.append(command)
+            if command == ['/fake/spicetify', 'config']:
+                assert fresh_install and not ini.exists()
+                ini.write_text(original)
             if command[-1:] == ['apply'] and 'backup' not in command:
                 return subprocess.CompletedProcess(command, 1, 'Please run "spicetify backup apply"')
             return subprocess.CompletedProcess(command, 0, '')
@@ -39,6 +43,7 @@ for valid_path in (False, True):
              patch.object(sys, 'argv', [str(script), '--app', str(app), '--spotify-app', str(root / 'Spotify.app')]), \
              contextlib.redirect_stdout(io.StringIO()):
             runpy.run_path(str(script), run_name='__main__')
+        assert (['/fake/spicetify', 'config'] in calls) == fresh_install
         config = root / '.config/lyricise'
         token = (config / 'bridge-token').read_text()
         assert len(token) == 64
