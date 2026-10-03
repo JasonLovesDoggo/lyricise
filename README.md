@@ -9,19 +9,12 @@ https://github.com/user-attachments/assets/604661a1-94d8-48f2-93fd-0d8f0ebc78e2
 Requires **macOS 27 or newer**, an **Apple silicon Mac**, [Homebrew](https://brew.sh), and the **Spotify desktop app**.
 
 ```sh
-(
-  set -e
-  installer=$(mktemp)
-  trap 'rm -f "$installer"' EXIT
-  curl -q --proto '=https' --proto-redir '=https' -fsSL --connect-timeout 15 --max-time 60 \
-    https://lyricise.jsn.cam/install.sh -o "$installer"
-  bash "$installer"
-)
+curl -fsSL https://lyricise.jsn.cam/install.sh | bash
 ```
 
 Installs the app in `~/Applications` and connects Spotify. No Xcode needed. The installer asks before making changes; Spotify restarts during setup. Your preferences and existing Spicetify extensions are preserved. The installer pins the app’s SHA-256 checksum and stops on errors. Previous app versions are saved in `~/.config/lyricise/backups`.
 
-[Read the installer](scripts/bootstrap.sh). To check requirements without installing, change the last command to `bash "$installer" --check`.
+[Read the installer](scripts/bootstrap.sh). To check requirements without installing, use `curl -fsSL https://lyricise.jsn.cam/install.sh | bash -s -- --check`.
 
 ## Use
 
