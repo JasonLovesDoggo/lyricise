@@ -1,5 +1,6 @@
 # Lyricise — changes are applied while the app is running.
 [window]
+toggle_hotkey = "" # Unset. Example: "cmd+shift+l"
 width = 420
 height = 300
 always_on_top = true

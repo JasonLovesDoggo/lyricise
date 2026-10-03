@@ -99,3 +99,28 @@ import Testing
     #expect(NumericSettingInput.borderWidth.parse("0") == 0)
     #expect(NumericSettingInput.borderWidth.parse("13") == nil)
 }
+
+@Test func windowHotKeyDefaultsValidationAndRoundTrip() throws {
+    #expect(try WindowHotKey.parse(AppConfig().toggleHotKey) == nil)
+    #expect(try AppConfig.parse("").toggleHotKey == "")
+    #expect(try WindowHotKey.parse(" CMD + shift + L ") == WindowHotKey.parse("shift+cmd+l"))
+    for shortcut in ["", "ctrl+alt+space", "cmd+shift+l", "ctrl+f12"] {
+        let config = try AppConfig.parse("[window]\ntoggle_hotkey = '\(shortcut)'")
+        #expect(try AppConfig.parse(config.serialized()).toggleHotKey == shortcut)
+    }
+    for shortcut in ["l", "shift+l", "cmd", "cmd+", "cmd+cmd+l", "cmd+unknown", "ctrl++l"] {
+        #expect(throws: (any Error).self) {
+            try AppConfig.parse("[window]\ntoggle_hotkey = '\(shortcut)'")
+        }
+    }
+}
+
+@Test func recordedHotKeysRoundTrip() throws {
+    for source in ["cmd+shift+l", "ctrl+alt+space", "cmd+escape", "ctrl+f12"] {
+        let binding = try #require(try WindowHotKey.parse(source))
+        let recorded = try #require(WindowHotKey.recording(keyCode: binding.keyCode, modifiers: binding.modifiers))
+        #expect(try WindowHotKey.parse(recorded) == binding)
+        #expect(WindowHotKey.recording(keyCode: binding.keyCode, modifiers: 0) == nil)
+    }
+    #expect(WindowHotKey.recording(keyCode: UInt32.max, modifiers: UInt32.max) == nil)
+}

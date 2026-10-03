@@ -18,6 +18,7 @@ import SwiftUI
         panel?.show()
         return false
     }
+    func applicationWillTerminate(_ notification: Notification) { panel?.hotKey.stop() }
     func applicationDidFinishLaunching(_ notification: Notification) {
         panel = PanelController(store: store)
         panel?.show()
@@ -45,6 +46,7 @@ import SwiftUI
             Button("Open Config…") { delegate.store.openConfig() }
             Button("Reload Config") { delegate.store.settings.reload() }
             if let error = delegate.store.settings.error { Text(error) }
+            if let error = delegate.store.hotKeyError { Text(error) }
             Divider()
             Text(delegate.store.playback.connected ? "Connected to Spotify" : "Waiting for Spotify companion")
             Divider()
@@ -64,6 +66,7 @@ import SwiftUI
 
 @MainActor final class PanelController: NSObject, NSWindowDelegate {
     static weak var current: PanelController?
+    let hotKey = GlobalHotKey()
     let panel: NSPanel
     let store: Store
     init(store: Store) {
@@ -129,6 +132,13 @@ import SwiftUI
                 store.settings.value.allSpaces
                 ? [.canJoinAllSpaces, .fullScreenAuxiliary] : [.moveToActiveSpace, .fullScreenAuxiliary]
             updateBlur()
+            do {
+                if store.recordingHotKey {
+                    hotKey.stop()
+                } else {
+                    store.hotKeyError = hotKey.update(try WindowHotKey.parse(store.settings.value.toggleHotKey))
+                }
+            } catch { store.hotKeyError = error.localizedDescription }
             _ = store.settings.value
         } onChange: { [weak self] in
             Task { @MainActor in self?.observe() }

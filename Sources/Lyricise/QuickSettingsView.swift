@@ -10,7 +10,7 @@ import SwiftUI
         Binding(get: { store.settings.value[keyPath: key] }, set: { store.settings.set(key, to: $0) })
     }
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Quick Settings").font(.headline)
                 Spacer()
@@ -21,32 +21,64 @@ import SwiftUI
                 }
                 .buttonStyle(.plain).help("Close settings")
             }
-            Picker("Font", selection: setting(\.font)) {
-                ForEach(Self.fontNames, id: \.self) { name in
-                    Text(name == "SF Pro" ? "System · SF Pro" : name).tag(name)
-                }
-                if !Self.fontNames.contains(store.settings.value.font) {
-                    Text(store.settings.value.font).tag(store.settings.value.font)
-                }
-            }
-            VStack(spacing: 6) {
-                HStack {
-                    Text("Font size")
-                    Spacer()
-                    NumericSettingField(kind: .fontSize, value: store.settings.value.fontSize) { size in
-                        store.settings.set(\.fontSize, to: size)
-                    }.frame(width: 70, height: 18)
-                }
-                Slider(
-                    value: Binding(
-                        get: { store.settings.value.fontSize },
-                        set: { store.settings.preview(\.fontSize, to: $0.rounded()) }),
-                    in: 10...72
-                ) { editing in
-                    if !editing { store.settings.set(\.fontSize, to: store.settings.value.fontSize) }
-                }.accessibilityLabel("Font size")
-            }
+            lyricsSettings
             Divider()
+            windowSettings
+            Divider()
+            appearanceSettings
+            if let error = store.settings.error {
+                Text(error).font(.caption).foregroundStyle(.red).fixedSize(
+                    horizontal: false, vertical: true)
+            }
+            Button("Open Config") { store.openConfig() }
+                .font(.callout)
+        }
+        .toggleStyle(.switch).controlSize(.small)
+        .padding(16).frame(width: 340)
+    }
+
+    private var lyricsSettings: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Text("Font")
+                Picker("Font", selection: setting(\.font)) {
+                    ForEach(Self.fontNames, id: \.self) { name in
+                        Text(name).tag(name)
+                    }
+                    if !Self.fontNames.contains(store.settings.value.font) {
+                        Text(store.settings.value.font).tag(store.settings.value.font)
+                    }
+                }.labelsHidden().frame(maxWidth: .infinity)
+                NumericSettingField(kind: .fontSize, value: store.settings.value.fontSize) { size in
+                    store.settings.set(\.fontSize, to: size)
+                }.frame(width: 55, height: 18)
+            }
+            Slider(
+                value: Binding(
+                    get: { store.settings.value.fontSize },
+                    set: { store.settings.preview(\.fontSize, to: $0.rounded()) }),
+                in: 10...72
+            ) { editing in
+                if !editing { store.settings.set(\.fontSize, to: store.settings.value.fontSize) }
+            }.accessibilityLabel("Font size")
+            HStack {
+                Text("Song details")
+                Spacer()
+                VisibilityPicker(title: "Song details", selection: setting(\.trackTitleVisibility))
+                    .pickerStyle(.menu).labelsHidden().frame(width: 130)
+            }
+            HStack {
+                Text("Album cover")
+                Spacer()
+                VisibilityPicker(title: "Album cover", selection: setting(\.artworkVisibility))
+                    .pickerStyle(.menu).labelsHidden().frame(width: 130)
+            }
+            Toggle("Follow current lyric", isOn: setting(\.followPlayback))
+        }
+    }
+
+    private var appearanceSettings: some View {
+        VStack(alignment: .leading, spacing: 8) {
             VStack(spacing: 6) {
                 HStack {
                     Text("Blur intensity")
@@ -79,29 +111,17 @@ import SwiftUI
                 Stepper("Border width", value: setting(\.borderWidth), in: 0...12, step: 0.5)
                     .labelsHidden()
             }
+        }
+    }
+
+    private var windowSettings: some View {
+        VStack(alignment: .leading, spacing: 8) {
             Toggle("Always on top", isOn: setting(\.alwaysOnTop))
             Toggle("Show on all Spaces", isOn: setting(\.allSpaces))
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Song details")
-                VisibilityPicker(title: "Song details", selection: setting(\.trackTitleVisibility))
-                    .pickerStyle(.segmented).labelsHidden()
-            }
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Album cover")
-                VisibilityPicker(title: "Album cover", selection: setting(\.artworkVisibility))
-                    .pickerStyle(.segmented).labelsHidden()
-            }
-            Toggle("Follow current lyric", isOn: setting(\.followPlayback))
-            if let error = store.settings.error {
-                Text(error).font(.caption).foregroundStyle(.red).fixedSize(
-                    horizontal: false, vertical: true)
-            }
-            Button("Open Config") { store.openConfig() }
-                .font(.callout)
+            HotKeyRecorder(store: store)
         }
-        .toggleStyle(.switch).controlSize(.small)
-        .padding(20).frame(width: 340)
     }
+
 }
 
 /// A native field accepts the first click without taking focus when the popover opens.
