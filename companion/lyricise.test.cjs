@@ -184,14 +184,14 @@ test('missing lyrics, auth failures, and rate limits are distinct', async () => 
   }
 });
 
-test('Spotify 1.3 RequestBuilder works without CosmosAsync, including syllable sync', async () => {
+test('Spotify 1.3 RequestBuilder works without CosmosAsync with line-synced lyrics', async () => {
   const h = harness(true);
   await settle();
   assert.equal(h.pending[0].url, 'https://spclient.wg.spotify.com/color-lyrics/v2/track/A');
   h.pending[0].resolve({
     lyrics: {
-      syncType: 'SYLLABLE_SYNCED',
-      lines: [{ startTimeMs: '500', words: 'Syllable line' }],
+      syncType: 'LINE_SYNCED',
+      lines: [{ startTimeMs: '500', words: 'Timed line' }],
     },
   });
   await settle();

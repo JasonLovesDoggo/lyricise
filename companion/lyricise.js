@@ -163,9 +163,8 @@
 
   function normalizeLyrics(lyrics) {
     const rawLines = Array.isArray(lyrics?.lines) ? lyrics.lines : [];
-    const synced = ['LINE_SYNCED', 'SYLLABLE_SYNCED'].includes(lyrics?.syncType);
     const timed =
-      synced &&
+      lyrics?.syncType === 'LINE_SYNCED' &&
       rawLines.every((line, index) => {
         const time = Number(line.startTimeMs);
         const previousTime = index === 0 ? 0 : Number(rawLines[index - 1].startTimeMs);
