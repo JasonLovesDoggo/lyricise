@@ -51,3 +51,5 @@ just install # Build and install from source
 just build  # Build the app
 just test   # Run tests
 ```
+
+To publish a release, run **Actions → Release → Run workflow** on `main` with a new version such as `v0.1.4`. The workflow tests, packages, and publishes the app and installer.
