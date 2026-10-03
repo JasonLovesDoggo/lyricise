@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Install the local bridge, preserving existing Spicetify customizations."""
 import argparse
+import configparser
 import datetime
 import os
 import pathlib
@@ -13,6 +14,8 @@ import tempfile
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--no-restart', action='store_true', help='Apply without restarting Spotify')
+parser.add_argument('--app', type=pathlib.Path, help='Use a prebuilt Lyricise.app bundle')
+parser.add_argument('--spotify-app', type=pathlib.Path, help='Spotify.app location for first-time setup')
 args = parser.parse_args()
 root = pathlib.Path(__file__).resolve().parent.parent
 config = pathlib.Path.home() / '.config/lyricise'
@@ -33,11 +36,18 @@ config_path = pathlib.Path(subprocess.check_output([cli, '-c'], text=True).strip
 spice = config_path.parent
 backup = pathlib.Path(tempfile.mkdtemp(prefix='spicetify-backup-' + datetime.datetime.now().strftime('%Y%m%d-'), dir=config))
 shutil.copy2(config_path, backup / 'config-xpui.ini')
+if args.spotify_app:
+    existing = configparser.ConfigParser(interpolation=None, strict=False)
+    existing.read(config_path)
+    spotify_path = existing.get('Setting', 'spotify_path', fallback='').strip()
+    if not spotify_path or not pathlib.Path(spotify_path).expanduser().is_dir():
+        subprocess.run([cli, 'config', 'spotify_path', str(args.spotify_app / 'Contents/Resources')], check=True)
 extension = spice / 'Extensions/lyricise.js'
 if extension.exists():
     shutil.copy2(extension, backup / 'lyricise.js')
 extension.parent.mkdir(parents=True, exist_ok=True)
-source = (root / 'companion/lyricise.js').read_text()
+source_path = args.app / 'Contents/Resources/lyricise.js' if args.app else root / 'companion/lyricise.js'
+source = source_path.read_text()
 if source.count('__LYRICISE_TOKEN__') != 1:
     raise SystemExit('Companion template is invalid; no Spotify changes were made.')
 fd, temporary = tempfile.mkstemp(dir=extension.parent, prefix='.lyricise-')
@@ -49,7 +59,7 @@ finally:
     if os.path.exists(temporary):
         os.unlink(temporary)
 # launchd keeps only a loopback socket open; the helper has no idle process.
-launcher_source = root / 'build/Lyricise.app/Contents/MacOS/LyriciseLauncher'
+launcher_source = (args.app if args.app else root / 'build/Lyricise.app') / 'Contents/MacOS/LyriciseLauncher'
 if not launcher_source.exists():
     launcher_source = pathlib.Path.home() / 'Applications/Lyricise.app/Contents/MacOS/LyriciseLauncher'
 if not launcher_source.exists():
