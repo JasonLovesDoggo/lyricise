@@ -163,6 +163,10 @@ struct LyricsView: View {
     @State private var suspended = false
     @State private var hoveredLine: Int?
     private var hovering: Bool { store.hovering }
+    private var headerCollapsed: Bool {
+        store.settings.value.trackTitleVisibility == .hover
+            && store.settings.value.artworkVisibility == .hover && !hovering
+    }
     @State private var resizeStart: NSRect?
     private func setting<Value>(_ key: WritableKeyPath<AppConfig, Value>) -> Binding<Value> {
         Binding(get: { store.settings.value[keyPath: key] }, set: { store.settings.set(key, to: $0) })
@@ -171,7 +175,10 @@ struct LyricsView: View {
         ZStack {
             Color(hex: store.settings.value.background).opacity(reduceTransparency ? 1 : store.settings.value.opacity)
             VStack(alignment: .leading, spacing: 0) {
-                if store.settings.value.trackTitleVisibility != .never || store.settings.value.artworkVisibility != .never {
+                if !headerCollapsed
+                    && (store.settings.value.trackTitleVisibility != .never
+                        || store.settings.value.artworkVisibility != .never)
+                {
                     HStack(spacing: 12) {
                         if store.settings.value.trackTitleVisibility != .never {
                             VStack(alignment: .leading, spacing: 3) {
@@ -194,6 +201,7 @@ struct LyricsView: View {
                             .opacity(store.settings.value.artworkVisibility.isVisible(hovering: hovering) ? 1 : 0)
                         }
                     }.padding(.horizontal, store.settings.value.padding).padding(.top, 16).padding(.bottom, 10)
+                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 if store.playback.lines.isEmpty || !store.playback.connected {
                     Text(store.message).font(.system(size: 14)).foregroundStyle(
@@ -298,6 +306,7 @@ struct LyricsView: View {
                     }
                 }
             }
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: headerCollapsed)
         }
         .overlay(alignment: .topLeading) {
             HStack(spacing: 6) {
