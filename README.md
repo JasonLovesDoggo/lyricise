@@ -12,9 +12,7 @@ Requires **macOS 27 or newer**, an **Apple silicon Mac**, [Homebrew](https://bre
 curl -fsSL https://lyricise.jsn.cam/install.sh | bash
 ```
 
-Installs the app in `~/Applications` and connects Spotify. No Xcode needed. The installer asks before making changes; Spotify restarts during setup. Your preferences and existing Spicetify extensions are preserved. The installer pins the app’s SHA-256 checksum and stops on errors. Previous app versions are saved in `~/.config/lyricise/backups`.
-
-[Read the installer](scripts/bootstrap.sh). To check requirements without installing, use `curl -fsSL https://lyricise.jsn.cam/install.sh | bash -s -- --check`.
+Installs Lyricise in `~/Applications` and sets up its Spotify companion. Spotify restarts once; existing Spicetify settings and extensions are preserved.
 
 ## Use
 
