@@ -43,7 +43,7 @@ main() {
   [ "$(uname -m)" = arm64 ] || { echo 'This release requires an Apple silicon Mac.' >&2; return 1; }
   local os_version
   os_version=$(sw_vers -productVersion)
-  [ "${os_version%%.*}" -ge 27 ] || { echo 'Lyricise requires macOS 27 or newer.' >&2; return 1; }
+  [ "${os_version%%.*}" -ge 15 ] || { echo 'Lyricise requires macOS 15 or newer.' >&2; return 1; }
   [ "$(id -u)" -ne 0 ] || { echo 'Run this installer as yourself, without sudo.' >&2; return 1; }
   local spotify_app=/Applications/Spotify.app
   if [ ! -d "$spotify_app" ]; then spotify_app="$HOME/Applications/Spotify.app"; fi

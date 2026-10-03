@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "Lyricise",
-    platforms: [.macOS("27.0")],
+    platforms: [.macOS("15.0")],
     products: [
         .executable(name: "Lyricise", targets: ["Lyricise"]),
         .executable(name: "LyriciseLauncher", targets: ["LyriciseLauncher"]),

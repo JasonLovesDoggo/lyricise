@@ -6,7 +6,7 @@ https://github.com/user-attachments/assets/604661a1-94d8-48f2-93fd-0d8f0ebc78e2
 
 ## Install
 
-Requires **macOS 27 or newer**, an **Apple silicon Mac**, [Homebrew](https://brew.sh), and the **Spotify desktop app**.
+Requires **macOS 15 or newer**, an **Apple silicon Mac**, [Homebrew](https://brew.sh), and the **Spotify desktop app**.
 
 ```sh
 curl -fsSL https://lyricise.jsn.cam/install.sh | bash
