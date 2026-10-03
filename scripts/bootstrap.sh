@@ -6,8 +6,8 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 # Packaging stamps these together; do not fetch a replacement checksum at runtime.
-release_version=v0.1.1
-release_sha256=f2070e90550b40884932f17d53fc1f747d1cb4b206e23b41f8b5db75fafdb670
+release_version=v0.1.2
+release_sha256=871603f17765635fe79c5c26499ca4c99fce12fcd68fd3fe62238769e8f37be6
 
 cleanup() {
   local status=$?
