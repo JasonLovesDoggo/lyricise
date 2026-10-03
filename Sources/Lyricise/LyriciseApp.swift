@@ -261,7 +261,7 @@ struct LyricsView: View {
                                     .padding(
                                         .vertical,
                                         !suspended && store.settings.value.followPlayback
-                                            && store.playback.lines.contains(where: { $0.time != nil })
+                                            && store.playback.active != nil
                                             ? geometry.size.height / 2 : 12)
                             }
                             .scrollIndicators(.hidden)
@@ -287,10 +287,12 @@ struct LyricsView: View {
                                 }
                             }
                             .onChange(of: store.playback.active) { _, id in
-                                guard store.settings.value.followPlayback, !suspended, let id else { return }
+                                guard store.settings.value.followPlayback, !suspended,
+                                    let target = id ?? store.playback.lines.first?.id
+                                else { return }
                                 withAnimation(
                                     reduceMotion || !store.playback.animateLine ? nil : .easeInOut(duration: 0.3)
-                                ) { proxy.scrollTo(id, anchor: .center) }
+                                ) { proxy.scrollTo(target, anchor: id == nil ? .top : .center) }
                             }
                             .onChange(of: geometry.size) { _, _ in
                                 if store.settings.value.followPlayback, !suspended, let id = store.playback.active {
@@ -305,11 +307,12 @@ struct LyricsView: View {
                             .mask(
                                 LinearGradient(
                                     stops: [
-                                        .init(color: .clear, location: 0),
+                                        .init(color: store.playback.active == nil ? .black : .clear, location: 0),
                                         .init(color: .black, location: 0.16),
                                         .init(color: .black, location: 0.84),
                                         .init(color: .clear, location: 1),
                                     ], startPoint: .top, endPoint: .bottom))
+                            .id(store.playback.trackID)
                         }
                     }
                 }
