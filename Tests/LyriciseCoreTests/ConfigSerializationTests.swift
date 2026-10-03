@@ -99,3 +99,18 @@ import Testing
     #expect(NumericSettingInput.borderWidth.parse("0") == 0)
     #expect(NumericSettingInput.borderWidth.parse("13") == nil)
 }
+
+@Test func windowHotKeyDefaultsValidationAndRoundTrip() throws {
+    #expect(try WindowHotKey.parse(AppConfig().toggleHotKey) == nil)
+    #expect(try AppConfig.parse("").toggleHotKey == "")
+    #expect(try WindowHotKey.parse(" CMD + shift + L ") == WindowHotKey.parse("shift+cmd+l"))
+    for shortcut in ["", "ctrl+alt+space", "cmd+shift+l", "ctrl+f12"] {
+        let config = try AppConfig.parse("[window]\ntoggle_hotkey = '\(shortcut)'")
+        #expect(try AppConfig.parse(config.serialized()).toggleHotKey == shortcut)
+    }
+    for shortcut in ["l", "shift+l", "cmd", "cmd+", "cmd+cmd+l", "cmd+unknown", "ctrl++l"] {
+        #expect(throws: (any Error).self) {
+            try AppConfig.parse("[window]\ntoggle_hotkey = '\(shortcut)'")
+        }
+    }
+}

@@ -2,6 +2,7 @@ import Foundation
 import TOML
 
 public struct AppConfig: Sendable, Equatable {
+    public var toggleHotKey = ""
     public var width = 420.0, height = 300.0
     public var alwaysOnTop = true, allSpaces = true, rememberPosition = true
     public var background = "#1e1e2e", accent = "#b4befe", text = "#cdd6f4", mutedText = "#6c7086"
@@ -17,6 +18,7 @@ public struct AppConfig: Sendable, Equatable {
         let decoded = try TOMLDecoder().decode(FileConfig.self, from: source)
         var config = Self()
         if let window = decoded.window {
+            config.toggleHotKey = window.toggle_hotkey ?? config.toggleHotKey
             config.width = window.width ?? config.width
             config.height = window.height ?? config.height
             config.alwaysOnTop = window.always_on_top ?? config.alwaysOnTop
@@ -52,6 +54,7 @@ public struct AppConfig: Sendable, Equatable {
             config.font.count <= 256,
             [config.background, config.accent, config.text, config.mutedText, config.borderColor].allSatisfy(Self.validColor)
         else { throw ConfigError.invalidValue }
+        _ = try WindowHotKey.parse(config.toggleHotKey)
         return config
     }
     /// Serializes all supported settings. TOML comments and unknown keys are not retained.
@@ -59,7 +62,7 @@ public struct AppConfig: Sendable, Equatable {
         let file = FileConfig(
             window: .init(
                 width: width, height: height, always_on_top: alwaysOnTop,
-                all_spaces: allSpaces, remember_position: rememberPosition),
+                all_spaces: allSpaces, remember_position: rememberPosition, toggle_hotkey: toggleHotKey),
             appearance: .init(
                 background: background, background_opacity: opacity, blur: .init(radius: blurRadius),
                 accent: accent, text: text, muted_text: mutedText, font: font,
@@ -109,6 +112,7 @@ private struct FileConfig: Codable {
     struct Window: Codable {
         var width: Double?, height: Double?, always_on_top: Bool?, all_spaces: Bool?,
             remember_position: Bool?
+        var toggle_hotkey: String?
     }
     struct Appearance: Codable {
         var background: String?, background_opacity: Double?, blur: BlurValue?, accent: String?,

@@ -8,6 +8,7 @@ import Observation
     var hoveringControls = false
     var quickSettingsPresented = false
     let playback = PlaybackState()
+    var hotKeyError: String?
     var connectionError: String?
     var message: String { connectionError ?? playback.message }
     @ObservationIgnored var bridge: Bridge?
