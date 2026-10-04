@@ -26,7 +26,7 @@ Open Lyricise and click **Connect Spotify**. To update, run `brew upgrade --cask
 
 Switching from the script? Quit Lyricise and trash `~/Applications/Lyricise.app` first; your settings are kept.
 
-If macOS blocks the first launch, use [Privacy & Security → Open Anyway](https://support.apple.com/en-us/102445).
+If macOS blocks Lyricise, use [Privacy & Security → Open Anyway](https://support.apple.com/en-us/102445).
 
 </details>
 
