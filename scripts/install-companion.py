@@ -17,13 +17,10 @@ parser.add_argument('--no-restart', action='store_true', help='Apply without res
 parser.add_argument('--app', type=pathlib.Path, help='Use a prebuilt Lyricise.app bundle')
 parser.add_argument('--spotify-app', type=pathlib.Path, help='Spotify.app location for first-time setup')
 args = parser.parse_args()
-root = pathlib.Path(__file__).resolve().parent.parent
-app = args.app.expanduser().resolve() if args.app else pathlib.Path.home() / 'Applications/Lyricise.app'
-source_path = app / 'Contents/Resources/lyricise.js' if args.app else root / 'companion/lyricise.js'
-launcher_source = (app if args.app else root / 'build/Lyricise.app') / 'Contents/MacOS/LyriciseLauncher'
-if not args.app and not launcher_source.is_file():
-    launcher_source = app / 'Contents/MacOS/LyriciseLauncher'
-if not source_path.is_file() or not launcher_source.is_file():
+app = (args.app or pathlib.Path.home() / 'Applications/Lyricise.app').expanduser().resolve()
+source_path = app / 'Contents/Resources/lyricise.js'
+launcher = app / 'Contents/MacOS/LyriciseLauncher'
+if not source_path.is_file() or not launcher.is_file() or not os.access(launcher, os.X_OK):
     raise SystemExit('Lyricise is missing its companion or launch helper. Reinstall the app, then retry.')
 source = source_path.read_text()
 if source.count('__LYRICISE_TOKEN__') != 1:
@@ -70,11 +67,6 @@ finally:
     if os.path.exists(temporary):
         os.unlink(temporary)
 # launchd keeps only a loopback socket open; the helper has no idle process.
-launcher = config / 'LyriciseLauncher'
-if launcher.exists():
-    shutil.copy2(launcher, backup / 'LyriciseLauncher')
-shutil.copy2(launcher_source, launcher)
-launcher.chmod(0o700)
 label = 'cam.jsn.lyricise.launcher'
 plist = pathlib.Path.home() / 'Library/LaunchAgents' / (label + '.plist')
 plist.parent.mkdir(parents=True, exist_ok=True)

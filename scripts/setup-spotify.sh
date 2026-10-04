@@ -62,6 +62,8 @@ if "$brew_bin" list --versions spicetify-cli >/dev/null 2>&1; then
   pinned=$("$brew_bin" list --pinned)
   if ! printf '%s\n' "$pinned" | grep -qx spicetify-cli; then
     "$brew_bin" upgrade spicetify-cli
+  else
+    echo 'Spicetify is pinned in Homebrew; keeping its current version.'
   fi
 else
   dependencies+=(spicetify-cli)

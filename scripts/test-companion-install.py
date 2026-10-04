@@ -18,13 +18,14 @@ for valid_path, fresh_install, missing_resource in (
 ):
     with tempfile.TemporaryDirectory(prefix='lyricise-companion-test-') as temporary:
         root = pathlib.Path(temporary)
-        app = root / 'Lyricise.app'
+        app = root / ('Applications/Lyricise.app' if fresh_install else 'Custom Apps/Lyricise.app')
         resources = app / 'Contents/Resources'
         resources.mkdir(parents=True)
         (resources / 'lyricise.js').write_text("const token = '__LYRICISE_TOKEN__';")
         binary = app / 'Contents/MacOS/LyriciseLauncher'
         binary.parent.mkdir()
         binary.write_text('test launcher')
+        binary.chmod(0o755)
         if missing_resource:
             (app / missing_resource).unlink()
         spice = root / 'spicetify'
@@ -32,8 +33,12 @@ for valid_path, fresh_install, missing_resource in (
         ini = spice / 'config-xpui.ini'
         configured_path = str(root) if valid_path else ''
         original = f'[Setting]\nspotify_path = {configured_path}\n[AdditionalOptions]\nextensions = existing.js\n'
+        config = root / '.config/lyricise'
+        legacy_helper = config / 'LyriciseLauncher'
         if not fresh_install:
             ini.write_text(original)
+            config.mkdir(parents=True)
+            legacy_helper.write_text('legacy launcher')
         calls = []
         def run(command, **kwargs):
             calls.append(command)
@@ -43,11 +48,12 @@ for valid_path, fresh_install, missing_resource in (
             if command[-1:] == ['apply'] and 'backup' not in command:
                 return subprocess.CompletedProcess(command, 1, 'Please run "spicetify backup apply"')
             return subprocess.CompletedProcess(command, 0, '')
+        app_arguments = [] if fresh_install else ['--app', str(app)]
         with patch.object(pathlib.Path, 'home', return_value=root), \
              patch('shutil.which', return_value='/fake/spicetify'), \
              patch('subprocess.check_output', return_value=str(ini)), \
              patch('subprocess.run', side_effect=run), \
-             patch.object(sys, 'argv', [str(script), '--app', str(app), '--spotify-app', str(root / 'Spotify.app')]), \
+             patch.object(sys, 'argv', [str(script), *app_arguments, '--spotify-app', str(root / 'Spotify.app')]), \
              contextlib.redirect_stdout(io.StringIO()):
             try:
                 runpy.run_path(str(script), run_name='__main__')
@@ -62,14 +68,16 @@ for valid_path, fresh_install, missing_resource in (
             assert not (root / '.config/lyricise').exists()
             continue
         assert (['/fake/spicetify', 'config'] in calls) == fresh_install
-        config = root / '.config/lyricise'
         token = (config / 'bridge-token').read_text()
         assert len(token) == 64
         assert (config / 'bridge-token').stat().st_mode & 0o777 == 0o600
         assert token in (spice / 'Extensions/lyricise.js').read_text()
-        assert (config / 'LyriciseLauncher').read_text() == 'test launcher'
+        if fresh_install:
+            assert not legacy_helper.exists()
+        else:
+            assert legacy_helper.read_text() == 'legacy launcher'
         with (root / 'Library/LaunchAgents/cam.jsn.lyricise.launcher.plist').open('rb') as file:
-            assert plistlib.load(file)['ProgramArguments'] == [str(config / 'LyriciseLauncher'), '--app', str(app.resolve())]
+            assert plistlib.load(file)['ProgramArguments'] == [str(binary.resolve()), '--app', str(app.resolve())]
         assert next(config.glob('spicetify-backup-*/config-xpui.ini')).read_text() == original
         path_updates = [call for call in calls if call[1:3] == ['config', 'spotify_path']]
         assert bool(path_updates) != valid_path
