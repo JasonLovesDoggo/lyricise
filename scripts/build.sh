@@ -19,7 +19,7 @@ codesign --force --sign - "$APP/Contents/MacOS/LyriciseLauncher"
 swift scripts/render-icon.swift "$PWD/build"
 iconutil -c icns "$PWD/build/AppIcon.iconset" -o "$APP/Contents/Resources/AppIcon.icns"
 cp build/MenuBarIcon.png Resources/Logo.svg "$APP/Contents/Resources/"
-cp companion/lyricise.js "$APP/Contents/Resources/lyricise.js"
+cp companion/lyricise.js scripts/install-companion.py scripts/setup-spotify.sh "$APP/Contents/Resources/"
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
