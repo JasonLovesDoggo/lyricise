@@ -12,6 +12,9 @@ on:
       - '.github/workflows/release.yml'
       - 'scripts/build.sh'
       - 'scripts/package-release.sh'
+      - 'scripts/setup-spotify.sh'
+      - 'scripts/install-companion.py'
+      - 'Casks/lyricise.rb'
 
 permissions:
   contents: read
@@ -64,6 +67,10 @@ jobs:
           codesign --verify --deep --strict "$RUNNER_TEMP/lyricise-release/Lyricise.app"
           actual_version=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$RUNNER_TEMP/lyricise-release/Lyricise.app/Contents/Info.plist")
           [[ "$actual_version" == "${RELEASE_TAG#v}" ]]
+          grep -Fx "  version \"${RELEASE_TAG#v}\"" lyricise.rb
+          grep -Fx "  sha256 \"$actual\"" lyricise.rb
+          bash -n "$RUNNER_TEMP/lyricise-release/Lyricise.app/Contents/Resources/setup-spotify.sh"
+          test -f "$RUNNER_TEMP/lyricise-release/Lyricise.app/Contents/Resources/install-companion.py"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release
@@ -71,6 +78,7 @@ jobs:
             build/release/Lyricise-macos-arm64.zip
             build/release/Lyricise-macos-arm64.zip.sha256
             build/release/install.sh
+            build/release/lyricise.rb
           if-no-files-found: error
           retention-days: 7
 
@@ -94,6 +102,22 @@ jobs:
         shell: bash
         run: |
           gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "$RELEASE_TAG" --draft --generate-notes
-          gh release upload "$RELEASE_TAG" release/Lyricise-macos-arm64.zip release/Lyricise-macos-arm64.zip.sha256 release/install.sh
+          gh release upload "$RELEASE_TAG" release/Lyricise-macos-arm64.zip release/Lyricise-macos-arm64.zip.sha256 release/install.sh release/lyricise.rb
           gh release edit "$RELEASE_TAG" --draft=false --latest
           printf 'Published [%s](https://github.com/%s/releases/tag/%s)\n' "$RELEASE_TAG" "$GH_REPO" "$RELEASE_TAG" >> "$GITHUB_STEP_SUMMARY"
+      - name: Update Homebrew cask
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.version }}
+        shell: bash
+        run: |
+          # Fail rather than overwrite a cask edited since this release began.
+          previous_sha=$(gh api "repos/$GH_REPO/contents/Casks/lyricise.rb?ref=$GITHUB_SHA" --jq .sha)
+          gh api --method PUT "repos/$GH_REPO/contents/Casks/lyricise.rb" \
+            -f branch=main -f sha="$previous_sha" \
+            -f message="chore: update Homebrew cask to $RELEASE_TAG" \
+            -f content="$(base64 -w 0 release/lyricise.rb)" --silent || {
+              echo 'Release is published. Download its lyricise.rb asset and commit it as Casks/lyricise.rb to finish the Homebrew update.' >&2
+              exit 1
+            }

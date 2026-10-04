@@ -14,6 +14,22 @@ curl -fsSL https://lyricise.jsn.cam/install.sh | bash
 
 Installs Lyricise in `~/Applications` and sets up its Spotify companion. Spotify restarts once; existing Spicetify settings and extensions are preserved.
 
+<details>
+<summary>Install with Homebrew</summary>
+
+```sh
+brew tap JasonLovesDoggo/lyricise https://github.com/JasonLovesDoggo/lyricise
+brew install --cask JasonLovesDoggo/lyricise/lyricise
+```
+
+Open Lyricise and click **Connect Spotify**. To update, run `brew upgrade --cask lyricise`, then choose **Reconnect Spotify…** from its menu.
+
+Switching from the script? Quit Lyricise and trash `~/Applications/Lyricise.app` first; your settings are kept.
+
+If macOS blocks the first launch, use [Privacy & Security → Open Anyway](https://support.apple.com/en-us/102445).
+
+</details>
+
 ## Use
 
 - Play a song in Spotify. The current lyric stays centered.
@@ -38,7 +54,7 @@ Changes reload automatically. See the [default config](Sources/LyriciseCore/Reso
 
 ## Troubleshooting
 
-If lyrics stop working after a Spotify update, rerun the install command above.
+If lyrics stop working after a Spotify update, choose **Connect Spotify…** from Lyricise’s menu.
 
 Some songs have no lyrics or no timing.
 
