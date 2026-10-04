@@ -25,7 +25,7 @@ import LyriciseCore
             } catch is CancellationError {
                 // App shutdown cancels the server task.
             } catch {
-                failure("Couldn’t start Spotify bridge: \(error.localizedDescription)")
+                failure("Couldn’t start Spotify bridge: \(String(describing: error))")
             }
         }
     }
