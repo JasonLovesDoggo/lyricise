@@ -19,4 +19,9 @@ sed -e "s/^release_version=.*/release_version=$version/" \
     -e "s/^release_sha256=.*/release_sha256=$digest/" \
     scripts/bootstrap.sh > build/release/install.sh
 bash -n build/release/install.sh
+# Keep the Homebrew release URL and checksum tied to this exact archive.
+sed -E -e "s/^  version \"[^\"]*\"/  version \"${version#v}\"/" \
+    -e "s/^  sha256 \"[^\"]*\"/  sha256 \"$digest\"/" \
+    Casks/lyricise.rb > build/release/lyricise.rb
+ruby -c build/release/lyricise.rb
 echo 'Release files are in build/release/'

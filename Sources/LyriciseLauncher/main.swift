@@ -86,9 +86,21 @@ private func reply(_ status: HTTPStatus, to socket: Int32) {
 }
 
 private func launchApp() -> HTTPStatus {
-    let app = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Applications/Lyricise.app").path
-    guard FileManager.default.fileExists(atPath: app) else { return .unavailable }
+    let arguments = Array(CommandLine.arguments.dropFirst())
+    let app: String
+    switch arguments.count {
+    case 0:
+        // Existing launch agents predate the explicit installation path.
+        app = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Applications/Lyricise.app").path
+    case 2 where arguments[0] == "--app" && arguments[1].hasPrefix("/"):
+        app = arguments[1]
+    default:
+        return .unavailable
+    }
+    guard URL(fileURLWithPath: app).pathExtension == "app",
+        Bundle(path: app)?.bundleIdentifier == "cam.jsn.lyricise"
+    else { return .unavailable }
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
     process.arguments = ["-a", app, "lyricise://show"]

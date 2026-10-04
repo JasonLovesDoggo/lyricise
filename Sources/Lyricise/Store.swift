@@ -7,6 +7,8 @@ import Observation
     var hovering = false
     var hoveringControls = false
     var quickSettingsPresented = false
+    var spotifySetupPresented = false
+    let spotifySetup = SpotifySetup()
     let playback = PlaybackState()
     var recordingHotKey = false
     var hotKeyError: String?

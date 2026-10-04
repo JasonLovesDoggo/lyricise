@@ -43,6 +43,10 @@ import SwiftUI
                 delegate.store.quickSettingsPresented = true
             }
             Button("Open Spotify") { NSWorkspace.shared.open(URL(string: "spotify:")!) }
+            Button(delegate.store.playback.connected ? "Reconnect Spotify…" : "Connect Spotify…") {
+                delegate.panel?.show()
+                delegate.store.spotifySetupPresented = true
+            }
             Button("Open Config…") { delegate.store.openConfig() }
             Button("Reload Config") { delegate.store.settings.reload() }
             if let error = delegate.store.settings.error { Text(error) }
@@ -222,9 +226,14 @@ struct LyricsView: View {
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 if store.playback.lines.isEmpty || !store.playback.connected {
-                    Text(store.message).font(.system(size: 14)).foregroundStyle(
-                        Color(hex: store.settings.value.mutedText)
-                    ).frame(maxWidth: .infinity, maxHeight: .infinity).padding()
+                    VStack(spacing: 12) {
+                        Text(store.message).font(.system(size: 14)).foregroundStyle(
+                            Color(hex: store.settings.value.mutedText))
+                        if !store.playback.connected {
+                            Button("Connect Spotify…") { store.spotifySetupPresented = true }
+                                .buttonStyle(.bordered)
+                        }
+                    }.frame(maxWidth: .infinity, maxHeight: .infinity).padding()
                 } else {
                     GeometryReader { geometry in
                         ScrollViewReader { proxy in
@@ -380,6 +389,9 @@ struct LyricsView: View {
                 .padding(3)
         }
         .contextMenu { commonSettings }
+        .sheet(isPresented: Binding(
+            get: { store.spotifySetupPresented }, set: { store.spotifySetupPresented = $0 })
+        ) { SpotifySetupView(store: store) }
         .onChange(of: store.playback.trackID) { _, _ in
             suspended = false
             hoveredLine = nil
