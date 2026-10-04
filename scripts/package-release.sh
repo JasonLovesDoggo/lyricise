@@ -4,7 +4,7 @@ cd "$(dirname "$0")/.."
 [ "$(uname -m)" = arm64 ] || { echo 'Build this release on Apple silicon.' >&2; exit 1; }
 version=${1:?Usage: scripts/package-release.sh vX.Y.Z}
 [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Invalid release version." >&2; exit 1; }
-just build
+LYRICISE_VERSION="${version#v}" just build
 package=$(mktemp -d "$PWD/build/release.XXXXXX")
 trap 'rm -rf -- "$package"' EXIT
 ditto build/Lyricise.app "$package/Lyricise.app"
