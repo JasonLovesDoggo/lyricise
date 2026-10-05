@@ -2,6 +2,8 @@
 """Verify bundled installs with temporary files and mocked system commands."""
 import contextlib
 import io
+import os
+import unittest
 import pathlib
 import runpy
 import subprocess
@@ -59,18 +61,10 @@ for valid_path, fresh_install in ((False, False), (True, False), (False, True)):
         assert ['/fake/spicetify', 'backup', 'apply'] in calls
 print('Bundled companion: token, app resources, backups, Spotify path and first-backup recovery checks passed.')
 
-import os
-import pathlib
-import subprocess
-import tempfile
-import unittest
-
-SCRIPT = pathlib.Path(__file__).with_name('install-companion.py')
-
 
 class PreflightTests(unittest.TestCase):
     def test_invalid_resources_leave_existing_state_untouched(self):
-        cases = ('missing-template', 'invalid-template', 'unreadable-template',
+        cases = ('missing-template', 'invalid-template', 'invalid-encoding',
                  'missing-launcher', 'directory-launcher', 'nonexecutable-launcher', 'invalid-spotify')
         for case in cases:
             with self.subTest(case=case), tempfile.TemporaryDirectory() as directory:
@@ -103,7 +97,7 @@ class PreflightTests(unittest.TestCase):
                     source.unlink()
                 elif case == 'invalid-template':
                     source.write_text('no placeholder')
-                elif case == 'unreadable-template':
+                elif case == 'invalid-encoding':
                     source.write_bytes(b'\xff')
                 elif case == 'missing-launcher':
                     launcher.unlink()
@@ -116,7 +110,7 @@ class PreflightTests(unittest.TestCase):
                     extra = ['--spotify-app', str(home / 'missing-Spotify.app')]
                 before = {p: (p.read_bytes(), p.stat().st_mode) for p in (config, extension, token)}
                 result = subprocess.run(
-                    ['python3', str(SCRIPT), '--app', str(app), '--no-restart', *extra],
+                    [sys.executable, str(script), '--app', str(app), '--no-restart', *extra],
                     env={**os.environ, 'HOME': str(home), 'PATH': str(bin_path) + os.pathsep + os.environ['PATH']},
                     capture_output=True, text=True)
                 self.assertNotEqual(result.returncode, 0)
