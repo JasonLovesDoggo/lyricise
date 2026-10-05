@@ -8,6 +8,7 @@ build:
 test:
     DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test
     node --test companion/lyricise.test.cjs
+    python3 scripts/test-companion-install.py
     python3 scripts/test-launcher.py "$(DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift build --show-bin-path)/LyriciseLauncher"
 
 # Install both the app and its Spotify companion, then launch.

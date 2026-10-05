@@ -18,6 +18,21 @@ parser.add_argument('--app', type=pathlib.Path, help='Use a prebuilt Lyricise.ap
 parser.add_argument('--spotify-app', type=pathlib.Path, help='Spotify.app location for first-time setup')
 args = parser.parse_args()
 root = pathlib.Path(__file__).resolve().parent.parent
+# Resolve and validate bundle resources before changing local or Spotify settings.
+source_path = args.app / 'Contents/Resources/lyricise.js' if args.app else root / 'companion/lyricise.js'
+try:
+    source = source_path.read_text()
+except (OSError, UnicodeError) as error:
+    raise SystemExit(f'Cannot read the companion template: {error}. No Spotify changes were made.')
+if source.count('__LYRICISE_TOKEN__') != 1:
+    raise SystemExit('Companion template is invalid; no Spotify changes were made.')
+launcher_source = (args.app if args.app else root / 'build/Lyricise.app') / 'Contents/MacOS/LyriciseLauncher'
+if not launcher_source.exists() and not args.app:
+    launcher_source = pathlib.Path.home() / 'Applications/Lyricise.app/Contents/MacOS/LyriciseLauncher'
+if not launcher_source.is_file() or not os.access(launcher_source, os.R_OK | os.X_OK):
+    raise SystemExit('The launch helper is missing or not executable. Build or reinstall Lyricise first; no Spotify changes were made.')
+if args.spotify_app and not (args.spotify_app / 'Contents/Resources').is_dir():
+    raise SystemExit('Spotify.app is missing Contents/Resources; no Spotify changes were made.')
 config = pathlib.Path.home() / '.config/lyricise'
 config.mkdir(parents=True, exist_ok=True)
 token_file = config / 'bridge-token'
@@ -51,10 +66,6 @@ extension = spice / 'Extensions/lyricise.js'
 if extension.exists():
     shutil.copy2(extension, backup / 'lyricise.js')
 extension.parent.mkdir(parents=True, exist_ok=True)
-source_path = args.app / 'Contents/Resources/lyricise.js' if args.app else root / 'companion/lyricise.js'
-source = source_path.read_text()
-if source.count('__LYRICISE_TOKEN__') != 1:
-    raise SystemExit('Companion template is invalid; no Spotify changes were made.')
 fd, temporary = tempfile.mkstemp(dir=extension.parent, prefix='.lyricise-')
 try:
     with os.fdopen(fd, 'w') as f:
@@ -64,11 +75,6 @@ finally:
     if os.path.exists(temporary):
         os.unlink(temporary)
 # launchd keeps only a loopback socket open; the helper has no idle process.
-launcher_source = (args.app if args.app else root / 'build/Lyricise.app') / 'Contents/MacOS/LyriciseLauncher'
-if not launcher_source.exists():
-    launcher_source = pathlib.Path.home() / 'Applications/Lyricise.app/Contents/MacOS/LyriciseLauncher'
-if not launcher_source.exists():
-    raise SystemExit('Build Lyricise first (scripts/build.sh) to install the launch helper.')
 launcher = config / 'LyriciseLauncher'
 if launcher.exists():
     shutil.copy2(launcher, backup / 'LyriciseLauncher')
