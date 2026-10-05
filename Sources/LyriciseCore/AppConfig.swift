@@ -73,7 +73,9 @@ public struct AppConfig: Sendable, Equatable {
                 follow_playback: followPlayback,
                 offset_ms: offsetMS)
         )
-        let source = try TOMLEncoder().encodeToString(file)
+        let encoder = TOMLEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        let source = try encoder.encodeToString(file)
         _ = try Self.parse(source)
         return source + (source.hasSuffix("\n") ? "" : "\n")
     }

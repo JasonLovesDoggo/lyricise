@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import TOML
 
 /// Owns settings on disk and their live preview. A save merges only the edited setting into the
 /// latest file; an invalid file or failed write leaves the last accepted settings in use.
@@ -20,7 +21,7 @@ import Observation
                 try AppConfig.defaultTOML.write(to: url, atomically: true, encoding: .utf8)
             }
             reload()
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = Self.describe(error) }
         watcher = ConfigWatcher(url: url) { [weak self] in self?.reload() }
     }
 
@@ -30,7 +31,7 @@ import Observation
             value = accepted
             previewChange?(&value)
             error = nil
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = Self.describe(error) }
     }
 
     /// Slider changes remain in memory until their editing gesture ends.
@@ -44,17 +45,34 @@ import Observation
         previewChange = nil
         do {
             // Read here, even when a watch event is pending, to preserve unrelated external edits.
-            accepted = try read()
+            let source = try readSource()
+            accepted = try AppConfig.parse(source)
             var updated = accepted
             updated[keyPath: key] = newValue
-            try updated.serialized().write(to: url, atomically: true, encoding: .utf8)
+            try ConfigDocument.updating(source, from: accepted, to: updated)
+                .write(to: url, atomically: true, encoding: .utf8)
             accepted = updated
             error = nil
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = Self.describe(error) }
         value = accepted
     }
 
-    private func read() throws -> AppConfig {
+    private static func describe(_ error: any Error) -> String {
+        let context: DecodingError.Context
+        switch error {
+        case DecodingError.typeMismatch(_, let value), DecodingError.valueNotFound(_, let value),
+             DecodingError.keyNotFound(_, let value), DecodingError.dataCorrupted(let value):
+            context = value
+        default:
+            return error is TOMLDecodingError ? String(describing: error) : error.localizedDescription
+        }
+        let key = context.codingPath.map(\.stringValue).joined(separator: ".")
+        return (key.isEmpty ? "Configuration" : key) + ": " + context.debugDescription
+    }
+
+    private func read() throws -> AppConfig { try AppConfig.parse(readSource()) }
+
+    private func readSource() throws -> String {
         let handle = try FileHandle(forReadingFrom: url)
         defer { try? handle.close() }
         let maximumBytes = 256 * 1024
@@ -63,7 +81,7 @@ import Observation
         guard let source = String(data: data, encoding: .utf8) else {
             throw SettingsReadError.invalidEncoding
         }
-        return try AppConfig.parse(source)
+        return source
     }
 }
 

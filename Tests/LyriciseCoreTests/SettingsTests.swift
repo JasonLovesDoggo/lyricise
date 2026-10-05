@@ -124,6 +124,100 @@ import Testing
         }
     }
 
+    @Test func savesPreserveUnknownContentAndComments() throws {
+        let directory = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("config.toml")
+        let source = """
+        # My settings
+        mystery = [1, 2, 3] # keep this
+        note = '''
+        [appearance]
+        font_size = 99
+        '''
+        ["appearance"] # style
+        "font_size" = 20 # keep trailing comment
+        custom = { hello = "world" }
+        [future]
+        enabled = true
+        """ + "\n"
+        try source.write(to: url, atomically: true, encoding: .utf8)
+        let settings = Settings(url: url)
+        settings.set(\.fontSize, to: 31)
+        #expect(settings.error == nil)
+        let actual = try String(contentsOf: url, encoding: .utf8)
+        let expected = source.replacingOccurrences(of: "\"font_size\" = 20", with: "\"font_size\" = 31.0")
+        #expect(actual == expected)
+        settings.set(\.fontSize, to: 32)
+        #expect(settings.error == nil)
+        #expect(try String(contentsOf: url, encoding: .utf8).contains("font_size = 99"))
+    }
+
+    @Test func savesDottedAndAbsentSettings() throws {
+        let directory = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("config.toml")
+        for source in ["# empty\n", "[appearance]\n# style\ncustom = 123\n[future]\nyes = true\n", "\"appearance\".\"font_size\" = 20 # dotted\n"] {
+            try source.write(to: url, atomically: true, encoding: .utf8)
+            let settings = Settings(url: url)
+            settings.set(\.fontSize, to: 35)
+            #expect(settings.error == nil)
+            #expect(try AppConfig.parse(String(contentsOf: url, encoding: .utf8)).fontSize == 35)
+            #expect(try String(contentsOf: url, encoding: .utf8).contains("#"))
+        }
+    }
+
+    @Test func unsupportedLayoutAndInvalidChangesLeaveBytesUnchanged() throws {
+        let directory = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("config.toml")
+        let source = "appearance = { font_size = 20, custom = 'keep' }\n"
+        try source.write(to: url, atomically: true, encoding: .utf8)
+        let settings = Settings(url: url)
+        settings.set(\.fontSize, to: 35)
+        #expect(settings.error?.contains("Open Config") == true)
+        #expect(try String(contentsOf: url, encoding: .utf8) == source)
+        settings.set(\.opacity, to: 2)
+        #expect(settings.error != nil)
+        #expect(try String(contentsOf: url, encoding: .utf8) == source)
+    }
+
+    @Test func sourceEditsHandleQuotesLineEndingsAndUnknownTables() throws {
+        let directory = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("config.toml")
+        for prefix in ["[[unknown]]\nname = 'keep'\n", "# CRLF\r\n"] {
+            let source = prefix + "[appearance]\r\n" + #"font = "A \"quoted\" # font" # comment"# + "\r\n"
+            try source.write(to: url, atomically: true, encoding: .utf8)
+            let settings = Settings(url: url)
+            settings.set(\.font, to: "New # Font")
+            #expect(settings.error == nil, "\(settings.error ?? "no error")")
+            let result = try String(contentsOf: url, encoding: .utf8)
+            #expect(result == prefix + "[appearance]\r\nfont = \"New # Font\" # comment\r\n")
+        }
+        let source = "[appearance]\ncustom = 123"
+        try source.write(to: url, atomically: true, encoding: .utf8)
+        let settings = Settings(url: url)
+        settings.set(\.fontSize, to: 35)
+        #expect(settings.error == nil)
+        #expect(try String(contentsOf: url, encoding: .utf8).hasPrefix(source + "\n"))
+    }
+
+    @Test func configErrorsIncludeKeyAndAllowedValues() throws {
+        let directory = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("config.toml")
+        for (source, expected) in [
+            ("[lyrics]\nshow_album_art = 'sometimes'", ["lyrics.show_album_art", "never, hover, or always"]),
+            ("[appearance]\nfont_size = 'big'", ["appearance.font_size", "Double"]),
+            ("[appearance\nfont_size = 20", ["line", "column"])
+        ] {
+            try source.write(to: url, atomically: true, encoding: .utf8)
+            let settings = Settings(url: url)
+            for message in expected { #expect(settings.error?.contains(message) == true) }
+        }
+    }
+
     private func temporaryDirectory() throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
