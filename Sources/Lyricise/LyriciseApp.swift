@@ -279,40 +279,27 @@ struct LyricsView: View {
                                 if phase == .interacting { suspended = true }
                             }
                             .onChange(of: store.playback.recenter) { _, _ in
-                                if store.settings.value.followPlayback, !suspended, let id = store.playback.active {
-                                    proxy.scrollTo(id, anchor: .center)
-                                }
+                                positionLyrics(using: proxy)
                             }
                             .onChange(of: store.settings.value) { _, _ in
-                                if store.settings.value.followPlayback, !suspended, let id = store.playback.active {
-                                    proxy.scrollTo(id, anchor: .center)
-                                }
+                                positionLyrics(using: proxy)
                             }
                             .overlay(alignment: .bottom) {
                                 if suspended && store.settings.value.followPlayback && store.playback.active != nil {
                                     Button("Back to current line") {
                                         suspended = false
-                                        if let id = store.playback.active { proxy.scrollTo(id, anchor: .center) }
+                                        positionLyrics(using: proxy)
                                     }.buttonStyle(.bordered).controlSize(.small).padding(.bottom, 10)
                                 }
                             }
-                            .onChange(of: store.playback.active) { _, id in
-                                guard store.settings.value.followPlayback, !suspended,
-                                    let target = id ?? store.playback.lines.first?.id
-                                else { return }
-                                withAnimation(
-                                    reduceMotion || !store.playback.animateLine ? nil : .easeInOut(duration: 0.3)
-                                ) { proxy.scrollTo(target, anchor: id == nil ? .top : .center) }
+                            .onChange(of: store.playback.active) { _, _ in
+                                positionLyrics(using: proxy, reason: .activeLineChanged)
                             }
                             .onChange(of: geometry.size) { _, _ in
-                                if store.settings.value.followPlayback, !suspended, let id = store.playback.active {
-                                    proxy.scrollTo(id, anchor: .center)
-                                }
+                                positionLyrics(using: proxy)
                             }
                             .onAppear {
-                                if store.settings.value.followPlayback, let id = store.playback.active {
-                                    proxy.scrollTo(id, anchor: .center)
-                                }
+                                positionLyrics(using: proxy, reason: .appeared)
                             }
                             .mask(
                                 LinearGradient(
@@ -392,6 +379,23 @@ struct LyricsView: View {
                 .allowsHitTesting(false)
         }
     }
+    private enum PositionReason { case layout, activeLineChanged, appeared }
+
+    private func positionLyrics(using proxy: ScrollViewProxy, reason: PositionReason = .layout) {
+        guard store.settings.value.followPlayback, reason == .appeared || !suspended else { return }
+        let active = store.playback.active
+        let target = active ?? (reason == .activeLineChanged ? store.playback.lines.first?.id : nil)
+        guard let target else { return }
+        let anchor: UnitPoint = active == nil ? .top : .center
+        if reason == .activeLineChanged {
+            withAnimation(reduceMotion || !store.playback.animateLine ? nil : .easeInOut(duration: 0.3)) {
+                proxy.scrollTo(target, anchor: anchor)
+            }
+        } else {
+            proxy.scrollTo(target, anchor: anchor)
+        }
+    }
+
     @ViewBuilder private var commonSettings: some View {
         Button("Quick Settings…") { store.quickSettingsPresented = true }
         Divider()
